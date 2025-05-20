@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1047082930833",
+    "project_id": "vaccitrack-7d5a4",
+    "storage_bucket": "vaccitrack-7d5a4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1047082930833:android:6c6d90679d6195a4866530",
+        "android_client_info": {
+          "package_name": "com.example.vaccitrack_frontend"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1047082930833-bva2nllpof98eksmsn5jf925ldkakssj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vaccitrack_frontend",
+            "certificate_hash": "26f2031cc5d9581acf17903d95d7e895b1b911e8"
+          }
+        },
+        {
+          "client_id": "1047082930833-4qukfpcrivagqgd8bc5d2b0af4hjh1iq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaN7hJdpU0tjQ0xnHISZMM0nRd7h3O1io"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1047082930833-4qukfpcrivagqgd8bc5d2b0af4hjh1iq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1047082930833-mepa099vtv36tjpmqucdkp1hj73bg7ph.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vaccitrackFrontend"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
