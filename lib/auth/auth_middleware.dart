@@ -14,7 +14,7 @@ class AuthMiddleware extends StatefulWidget {
 }
 
 class _AuthMiddlewareState extends State<AuthMiddleware> {
-  static const String baseUrl = 'http://192.168.1.207:3001/api';
+  static const String baseUrl = 'http://192.168.1.215:3001/api';
   late Future<Widget> _pageToShow;
 
   @override

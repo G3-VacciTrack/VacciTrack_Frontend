@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
+import '../services/auth_service.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -8,8 +7,8 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final _formKey = GlobalKey<FormState>();
+  final AuthService _authService = AuthService();
 
   String email = '';
   String password = '';
@@ -23,9 +22,7 @@ class _SignUpPageState extends State<SignUpPage> {
     form.save();
 
     if (password != confirmPassword) {
-      setState(() {
-        error = 'Passwords do not match';
-      });
+      setState(() => error = 'Passwords do not match');
       return;
     }
 
@@ -34,31 +31,21 @@ class _SignUpPageState extends State<SignUpPage> {
       error = '';
     });
 
-    try {
-      UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(email: email, password: password);
+    final result = await _authService.registerWithEmail(email, password);
 
-      if (userCredential.user != null) {
-        Navigator.of(context).pop();
-      }
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        error = e.message ?? 'Registration error';
-      });
-    } finally {
-      setState(() {
-        loading = false;
-      });
+    if (result == null) {
+      Navigator.of(context).pop();
+    } else {
+      setState(() => error = result);
     }
+
+    setState(() => loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Create your new account'),
-        automaticallyImplyLeading: false, // removes the default back arrow
-      ),
+      appBar: AppBar(title: Text('Create your new account')),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -72,75 +59,52 @@ class _SignUpPageState extends State<SignUpPage> {
                       Container(
                         padding: EdgeInsets.all(8),
                         color: Colors.red[200],
-                        child: Text(
-                          error,
-                          style: TextStyle(color: Colors.red[900]),
-                        ),
+                        child: Text(error, style: TextStyle(color: Colors.red[900])),
                       ),
                     SizedBox(height: 20),
+
                     // Email
                     TextFormField(
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
                       keyboardType: TextInputType.emailAddress,
                       onSaved: (val) => email = val!.trim(),
-                      validator:
-                          (val) =>
-                              val != null && val.contains('@')
-                                  ? null
-                                  : 'Enter a valid email',
+                      validator: (val) =>
+                          val != null && val.contains('@') ? null : 'Enter a valid email',
                     ),
                     SizedBox(height: 20),
 
                     // Password
                     TextFormField(
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
                       obscureText: true,
                       onSaved: (val) => password = val!.trim(),
-                      validator:
-                          (val) =>
-                              val != null && val.length >= 6
-                                  ? null
-                                  : 'Password must be 6+ chars',
+                      validator: (val) =>
+                          val != null && val.length >= 6 ? null : 'Password must be 6+ chars',
                     ),
                     SizedBox(height: 20),
 
                     // Confirm Password
                     TextFormField(
-                      decoration: InputDecoration(
-                        labelText: 'Confirm Password',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration:
+                          InputDecoration(labelText: 'Confirm Password', border: OutlineInputBorder()),
                       obscureText: true,
                       onSaved: (val) => confirmPassword = val!.trim(),
-                      validator:
-                          (val) =>
-                              val != null && val.length >= 6
-                                  ? null
-                                  : 'Confirm password must be 6+ chars',
+                      validator: (val) => val != null && val.length >= 6
+                          ? null
+                          : 'Confirm password must be 6+ chars',
                     ),
                     SizedBox(height: 20),
 
                     loading
                         ? Center(child: CircularProgressIndicator())
-                        : ElevatedButton(
-                          onPressed: submit,
-                          child: Text('Register'),
-                        ),
+                        : ElevatedButton(onPressed: submit, child: Text('Register')),
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text('Have an account? '),
                         TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
+                          onPressed: () => Navigator.of(context).pop(),
                           child: Text('Sign In'),
                         ),
                       ],
