@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:convert';
 
 import 'home_page.dart';
 
@@ -16,7 +18,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
   int age = 0;
   String gender = 'Male';
   String responseMessage = '';
-  static const String baseUrl = 'http://192.168.1.207:3001/api';
+  static const String baseUrl = 'http://192.168.1.215:3001/api';
 
   Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
@@ -25,16 +27,25 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
 
   Future<void> _submit() async {
     final form = _formKey.currentState;
+    final fcm = FirebaseMessaging.instance;
+    final token = await fcm.getToken();
+
     if (form == null || !form.validate()) return;
     form.save();
     final uid = await getUserId();
-    final url = Uri.parse(
-      '$baseUrl/user/info?uid=${uid}&firstName=${firstName}&lastName=${lastName}&age=${age}&gender=${gender}',
-    );
+    final url = Uri.parse('$baseUrl/user/info?uid=${uid}');
+    final Map<String, dynamic> requestBody = {
+      'firstName': firstName,
+      'lastName': lastName,
+      'age': age,
+      'gender': gender,
+      'token': token,
+    };
     try {
-      final response = await http.post(
+      final response = await http.put(
         url,
         headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
       );
 
       if (response.statusCode == 200) {

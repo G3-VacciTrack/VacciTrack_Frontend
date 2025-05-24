@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:colorful_iconify_flutter/icons/logos.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
-import 'signup_page.dart';
-import 'personal_info_page.dart';
 import 'home_page.dart';
+import 'personal_info_page.dart';
+import 'signup_page.dart';
+import '../services/auth_service.dart';
 
 class SignInPage extends StatefulWidget {
   @override
@@ -17,92 +13,17 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final _formKey = GlobalKey<FormState>();
-  static const String baseUrl = 'http://192.168.1.207:3001/api';
+  final AuthService _authService = AuthService();
 
   String email = '';
   String password = '';
   String error = '';
   bool loading = false;
 
-  Future<void> saveUserId(String uid) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_id', uid);
-  }
-
-  Future<void> signInWithGoogle(BuildContext context) async {
-    setState(() {
-      loading = true;
-      error = '';
-    });
-
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        setState(() {
-          loading = false;
-        });
-        return;
-      }
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final userCredential = await FirebaseAuth.instance.signInWithCredential(
-        credential,
-      );
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        final uid = user.uid;
-        await saveUserId(uid);
-
-        // Call backend to check if user is new
-        final url = Uri.parse('$baseUrl/user/validate?uid=$uid');
-        final response = await http.get(
-          url,
-          headers: {'Content-Type': 'application/json'},
-        );
-
-        bool isNewUser = false;
-        if (response.statusCode == 200) {
-          final jsonResponse = json.decode(response.body);
-          isNewUser = jsonResponse['status'] == true;
-        } else {
-          isNewUser = true;
-        }
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => isNewUser ? PersonalInfoPage() : Home(),
-          ),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        error = e.message ?? 'Google sign-in failed';
-      });
-    } catch (e, stackTrace) {
-      setState(() {
-        error = 'Unexpected error: $e';
-      });
-      print("Google sign-in error: $e");
-      print("Stack trace: $stackTrace");
-    } finally {
-      setState(() {
-        loading = false;
-      });
-    }
-  }
-
   Future<void> submit() async {
     final form = _formKey.currentState;
+
     if (form == null || !form.validate()) return;
     form.save();
 
@@ -111,49 +32,46 @@ class _SignInPageState extends State<SignInPage> {
       error = '';
     });
 
-    try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
+    final result = await _authService.signInWithEmail(email, password);
+    if (result['success']) {
+      final isNew = result['isNewUser'] == true;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+            builder: (_) => isNew ? PersonalInfoPage() : Home()),
       );
-
-      if (userCredential.user != null) {
-        await saveUserId(userCredential.user!.uid);
-        final url = Uri.parse(
-          '$baseUrl/user/validate?uid=${userCredential.user!.uid}',
-        );
-        final response = await http.get(
-          url,
-          headers: {'Content-Type': 'application/json'},
-        );
-        bool isNewUser = false;
-        if (response.statusCode == 200) {
-          final jsonResponse = json.decode(response.body);
-          setState(() {
-            isNewUser = jsonResponse['status'];
-          });
-        } else {
-          isNewUser = true;
-        }
-        if (isNewUser) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => PersonalInfoPage()),
-          );
-        } else {
-          Navigator.of(
-            context,
-          ).pushReplacement(MaterialPageRoute(builder: (_) => Home()));
-        }
-      }
-    } on FirebaseAuthException catch (e) {
+    } else {
       setState(() {
-        error = e.message ?? 'Authentication error';
-      });
-    } finally {
-      setState(() {
-        loading = false;
+        error = result['message'];
       });
     }
+
+    setState(() {
+      loading = false;
+    });
+  }
+
+  Future<void> handleGoogleSignIn() async {
+    setState(() {
+      loading = true;
+      error = '';
+    });
+
+    final result = await _authService.signInWithGoogle();
+    if (result['success']) {
+      final isNew = result['isNewUser'] == true;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+            builder: (_) => isNew ? PersonalInfoPage() : Home()),
+      );
+    } else {
+      setState(() {
+        error = result['message'];
+      });
+    }
+
+    setState(() {
+      loading = false;
+    });
   }
 
   @override
@@ -179,11 +97,8 @@ class _SignInPageState extends State<SignInPage> {
                 ),
                 keyboardType: TextInputType.emailAddress,
                 onSaved: (val) => email = val!.trim(),
-                validator:
-                    (val) =>
-                        val != null && val.contains('@')
-                            ? null
-                            : 'Enter a valid email',
+                validator: (val) =>
+                    val != null && val.contains('@') ? null : 'Enter a valid email',
               ),
               SizedBox(height: 20),
               TextFormField(
@@ -193,33 +108,28 @@ class _SignInPageState extends State<SignInPage> {
                 ),
                 obscureText: true,
                 onSaved: (val) => password = val!.trim(),
-                validator:
-                    (val) =>
-                        val != null && val.length >= 6
-                            ? null
-                            : 'Password must be 6+ chars',
+                validator: (val) =>
+                    val != null && val.length >= 6 ? null : 'Password must be 6+ chars',
               ),
               SizedBox(height: 20),
               loading
                   ? CircularProgressIndicator()
                   : SizedBox(
-                    width: double.infinity,
-                    height:
-                        50, // for a square button, set height = width (or choose a fixed height)
-                    child: ElevatedButton(
-                      onPressed: submit,
-                      child: Text('Sign In'),
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: submit,
+                        child: Text('Sign In'),
+                      ),
                     ),
-                  ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text('Don\'t have an account?'),
                   TextButton(
                     onPressed: () {
-                      Navigator.of(
-                        context,
-                      ).push(MaterialPageRoute(builder: (_) => SignUpPage()));
+                      Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => SignUpPage()));
                     },
                     child: Text('Register now'),
                   ),
@@ -230,7 +140,7 @@ class _SignInPageState extends State<SignInPage> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () => signInWithGoogle(context),
+                  onPressed: handleGoogleSignIn,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                   ),
