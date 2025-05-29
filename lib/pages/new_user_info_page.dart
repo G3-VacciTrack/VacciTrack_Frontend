@@ -5,7 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'home_page.dart';
+import 'main_page.dart';
 
 class NewUserInfoPage extends StatefulWidget {
   @override
@@ -62,7 +62,7 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
       if (response.statusCode == 200) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => MainPage()),
         );
       } else {
         setState(() {

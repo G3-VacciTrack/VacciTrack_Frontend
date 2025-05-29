@@ -1,62 +1,101 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-import '../components/custom_bottom_navigation.dart';
-
-import 'history_page.dart';
-import 'appointment_page.dart';
-import 'user_info_page.dart';
-import 'education_page.dart';
-import 'signin_page.dart';
+import './education_detail_page.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  Future<void> _signOut(BuildContext context) async {
-    await _auth.signOut();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('did');
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => SignInPage()));
+  Map<String, dynamic>? educationData;
+  bool isLoading = true;
+  static final String baseUrl =
+      dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
+  @override
+  void initState() {
+    super.initState();
+    fetchEducationData();
   }
 
-  final List<Widget> _pages = [
-    Center(child: Text('Home Page')),
-    HistoryPage(),
-    AppointmentPage(),
-    EducationPage(),
-    UserInfoPage(),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
+  Future<void> fetchEducationData() async {
+    try {
+      final url = Uri.parse('$baseUrl/education/all');
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        setState(() {
+          educationData = json.decode(response.body);
+          isLoading = false;
+        });
+      } else {
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (educationData == null || educationData!['education'] == null) {
+      return const Center(child: Text('No data available'));
+    }
+
+    final List educations = educationData!['education'];
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Your App Name'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            tooltip: 'Sign Out',
-            onPressed: () => _signOut(context),
-          ),
-        ],
-      ),
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+      appBar: AppBar(title: const Text('Vaccination Tracker')),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: educations.length,
+        itemBuilder: (context, index) {
+          final item = educations[index];
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EducationDetailPage(data: item),
+                ),
+              );
+            },
+            child: Card(
+              margin: const EdgeInsets.only(bottom: 24),
+              elevation: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (item['cover'] != null)
+                    Image.asset(
+                      'assets/images/${item['cover']}.png',
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      item['title'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

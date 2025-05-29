@@ -13,7 +13,8 @@ class AppointmentPage extends StatefulWidget {
 }
 
 class _AppointmentPageState extends State<AppointmentPage> {
-  static final String baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
+  static final String baseUrl =
+      dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
   String errorMessage = '';
   late Future<List<dynamic>> futureAppointments;
 
@@ -62,6 +63,14 @@ class _AppointmentPageState extends State<AppointmentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Appointments',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: FutureBuilder<List<dynamic>>(
         future: futureAppointments,
         builder: (context, snapshot) {

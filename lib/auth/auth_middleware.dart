@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import '../pages/home_page.dart';
+import '../pages/main_page.dart';
 import '../pages/signin_page.dart';
 import '../pages/new_user_info_page.dart';
 
@@ -47,9 +47,9 @@ class AuthMiddlewareState extends State<AuthMiddleware> {
         final jsonResponse = json.decode(response.body);
         final bool isNewUser = jsonResponse['status'] == true;
 
-        return isNewUser ? NewUserInfoPage() : HomePage();
+        return isNewUser ? NewUserInfoPage() : MainPage();
       } else {
-        return HomePage();
+        return MainPage();
       }
     } catch (e) {
       print('Error sending request: $e');

@@ -15,6 +15,9 @@ class CustomVaccineAccordion extends StatelessWidget {
         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
       shape: Border.all(color: Colors.transparent),
+      tilePadding: EdgeInsets.zero,
+      collapsedIconColor: Colors.black,
+      expandedAlignment: Alignment.centerLeft,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 0),
@@ -31,7 +34,10 @@ class CustomVaccineAccordion extends StatelessWidget {
                       "• ${vaccine['name']}",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Text(vaccine['doses']),
+                    if (vaccine['doses'] != null)
+                      Text(
+                        vaccine['doses'],
+                      ),
                     if (vaccine['importance'] != null)
                       Text(
                         "Why important: ${vaccine['importance']}",
