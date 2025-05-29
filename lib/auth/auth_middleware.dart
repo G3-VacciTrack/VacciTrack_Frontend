@@ -3,18 +3,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../pages/home_page.dart';
 import '../pages/signin_page.dart';
-import '../pages/personal_info_page.dart';
+import '../pages/new_user_info_page.dart';
 
 class AuthMiddleware extends StatefulWidget {
   @override
-  _AuthMiddlewareState createState() => _AuthMiddlewareState();
+  AuthMiddlewareState createState() => AuthMiddlewareState();
 }
 
-class _AuthMiddlewareState extends State<AuthMiddleware> {
-  static const String baseUrl = 'http://192.168.1.215:3001/api';
+class AuthMiddlewareState extends State<AuthMiddleware> {
+  static final String baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
   late Future<Widget> _pageToShow;
 
   @override
@@ -46,9 +47,9 @@ class _AuthMiddlewareState extends State<AuthMiddleware> {
         final jsonResponse = json.decode(response.body);
         final bool isNewUser = jsonResponse['status'] == true;
 
-        return isNewUser ? PersonalInfoPage() : Home();
+        return isNewUser ? NewUserInfoPage() : HomePage();
       } else {
-        return Home();
+        return HomePage();
       }
     } catch (e) {
       print('Error sending request: $e');

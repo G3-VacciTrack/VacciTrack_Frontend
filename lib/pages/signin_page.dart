@@ -3,7 +3,7 @@ import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:colorful_iconify_flutter/icons/logos.dart';
 
 import 'home_page.dart';
-import 'personal_info_page.dart';
+import 'new_user_info_page.dart';
 import 'signup_page.dart';
 import '../services/auth_service.dart';
 
@@ -37,7 +37,7 @@ class _SignInPageState extends State<SignInPage> {
       final isNew = result['isNewUser'] == true;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-            builder: (_) => isNew ? PersonalInfoPage() : Home()),
+            builder: (_) => isNew ? NewUserInfoPage() : HomePage()),
       );
     } else {
       setState(() {
@@ -61,7 +61,7 @@ class _SignInPageState extends State<SignInPage> {
       final isNew = result['isNewUser'] == true;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-            builder: (_) => isNew ? PersonalInfoPage() : Home()),
+            builder: (_) => isNew ? NewUserInfoPage() : HomePage()),
       );
     } else {
       setState(() {

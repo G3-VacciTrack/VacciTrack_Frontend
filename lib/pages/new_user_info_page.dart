@@ -3,22 +3,24 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'home_page.dart';
 
-class PersonalInfoPage extends StatefulWidget {
+class NewUserInfoPage extends StatefulWidget {
   @override
-  State<PersonalInfoPage> createState() => _PersonalInfoPageState();
+  State<NewUserInfoPage> createState() => _NewUserInfoPageState();
 }
 
-class _PersonalInfoPageState extends State<PersonalInfoPage> {
+class _NewUserInfoPageState extends State<NewUserInfoPage> {
   final _formKey = GlobalKey<FormState>();
   String firstName = '';
   String lastName = '';
-  int age = 0;
   String gender = 'Male';
   String responseMessage = '';
-  static const String baseUrl = 'http://192.168.1.215:3001/api';
+  DateTime? dob;
+
+  static final String baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
 
   Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
@@ -31,16 +33,25 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
     final token = await fcm.getToken();
 
     if (form == null || !form.validate()) return;
+
+    if (dob == null) {
+      setState(() {
+        responseMessage = 'Please select your date of birth.';
+      });
+      return;
+    }
+
     form.save();
     final uid = await getUserId();
-    final url = Uri.parse('$baseUrl/user/info?uid=${uid}');
+    final url = Uri.parse('$baseUrl/user/info?uid=$uid');
     final Map<String, dynamic> requestBody = {
       'firstName': firstName,
       'lastName': lastName,
-      'age': age,
+      'dob': dob!.toIso8601String(),
       'gender': gender,
       'token': token,
     };
+
     try {
       final response = await http.put(
         url,
@@ -51,7 +62,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
       if (response.statusCode == 200) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => Home()),
+          MaterialPageRoute(builder: (context) => HomePage()),
         );
       } else {
         setState(() {
@@ -61,6 +72,21 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
     } catch (e) {
       setState(() {
         responseMessage = 'Error sending request: $e';
+      });
+    }
+  }
+
+  Future<void> _selectDOB(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000, 1, 1),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null && picked != dob) {
+      setState(() {
+        dob = picked;
       });
     }
   }
@@ -87,11 +113,8 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                   labelText: 'First Name',
                   border: OutlineInputBorder(),
                 ),
-                validator:
-                    (val) =>
-                        val != null && val.isNotEmpty
-                            ? null
-                            : 'Enter first name',
+                validator: (val) =>
+                    val != null && val.isNotEmpty ? null : 'Enter first name',
                 onSaved: (val) => firstName = val!.trim(),
               ),
               SizedBox(height: 12),
@@ -102,57 +125,46 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                   labelText: 'Last Name',
                   border: OutlineInputBorder(),
                 ),
-                validator:
-                    (val) =>
-                        val != null && val.isNotEmpty
-                            ? null
-                            : 'Enter last name',
+                validator: (val) =>
+                    val != null && val.isNotEmpty ? null : 'Enter last name',
                 onSaved: (val) => lastName = val!.trim(),
               ),
               SizedBox(height: 12),
 
-              // Age and Gender in the same row
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      decoration: InputDecoration(
-                        labelText: 'Age',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (val) {
-                        final n = int.tryParse(val ?? '');
-                        if (n == null || n <= 0) return 'Enter valid age';
-                        return null;
-                      },
-                      onSaved: (val) => age = int.tryParse(val ?? '') ?? 0,
+              // Date of Birth Picker
+              InkWell(
+                onTap: () => _selectDOB(context),
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Date of Birth',
+                    border: OutlineInputBorder(),
+                  ),
+                  child: Text(
+                    dob != null
+                        ? "${dob!.day}/${dob!.month}/${dob!.year}"
+                        : 'Select Date of Birth',
+                    style: TextStyle(
+                      color: dob != null ? Colors.black : Colors.grey,
+                      fontSize: 16,
                     ),
                   ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        labelText: 'Gender',
-                        border: OutlineInputBorder(),
-                      ),
-                      items:
-                          ['Male', 'Female']
-                              .map(
-                                (g) =>
-                                    DropdownMenuItem(value: g, child: Text(g)),
-                              )
-                              .toList(),
-                      validator:
-                          (val) =>
-                              val == null || val.isEmpty
-                                  ? 'Select gender'
-                                  : null,
-                      onChanged: (val) => gender = val ?? gender,
-                      onSaved: (val) => gender = val ?? gender,
-                    ),
-                  ),
-                ],
+                ),
+              ),
+              SizedBox(height: 12),
+
+              // Gender Dropdown
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: 'Gender',
+                  border: OutlineInputBorder(),
+                ),
+                items: ['Male', 'Female']
+                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                    .toList(),
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Select gender' : null,
+                onChanged: (val) => gender = val ?? gender,
+                onSaved: (val) => gender = val ?? gender,
               ),
               SizedBox(height: 20),
 
