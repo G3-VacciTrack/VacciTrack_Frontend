@@ -40,10 +40,6 @@ class _HomePageState extends State<HomePage> {
     setState(() => _selectedIndex = index);
   }
 
-  void _logout() {
-    print('Logout pressed');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
