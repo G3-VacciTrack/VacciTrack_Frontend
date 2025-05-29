@@ -1,20 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  static const String baseUrl = 'http://192.168.1.215:3001/api';
+  static final String baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
 
   Future<void> saveUserId(String uid) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_id', uid);
   }
 
-  Future<bool> isNewUser(String uid) async {
-    final url = Uri.parse('$baseUrl/user/validate?uid=$uid');
+  Future<bool> isNewUser(String uid, String email) async {
+    final url = Uri.parse('$baseUrl/user/validate?uid=$uid&email=$email');
     final response = await http.get(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -47,8 +48,9 @@ class AuthService {
 
       if (user != null) {
         final uid = user.uid;
+        final email = user.email ?? '';
         await saveUserId(uid);
-        final isNew = await isNewUser(uid);
+        final isNew = await isNewUser(uid, email);
         return {'success': true, 'isNewUser': isNew};
       } else {
         return {'success': false, 'message': 'User is null'};
@@ -72,7 +74,7 @@ class AuthService {
       if (user != null) {
         final uid = user.uid;
         await saveUserId(uid);
-        final isNew = await isNewUser(uid);
+        final isNew = await isNewUser(uid, email);
         return {'success': true, 'isNewUser': isNew};
       } else {
         return {'success': false, 'message': 'User is null'};
