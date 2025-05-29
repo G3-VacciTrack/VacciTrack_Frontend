@@ -12,30 +12,26 @@ class EducationDetailPage extends StatelessWidget {
     final String? reference = data['Reference'];
 
     return Scaffold(
-      appBar: AppBar(title: Text(data['title'] ?? 'Detail')),
+      appBar: AppBar(title: Text("Vaccines for " + data['title'] ?? 'Detail')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (data['cover'] != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  data['cover'],
-                  width: double.infinity,
-                  height: 300,
-                  fit: BoxFit.cover,
-                ),
+              Image.asset(
+                'assets/images/${data['cover']}.png',
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
               ),
             SizedBox(height: 16),
-            Text(
-              data['description'] ?? '',
-              style: TextStyle(fontSize: 16),
-            ),
+            Text(data['description'] ?? '', style: TextStyle(fontSize: 16)),
             SizedBox(height: 24),
 
-            ...sections.map((section) => CustomVaccineAccordion(section: section)).toList(),
+            ...sections
+                .map((section) => CustomVaccineAccordion(section: section))
+                .toList(),
 
             SizedBox(height: 32),
             if (reference != null && reference.isNotEmpty)
@@ -43,18 +39,15 @@ class EducationDetailPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Divider(),
+                  SizedBox(height: 10),
                   Text(
                     'Reference',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    reference,
-                    style: TextStyle(color: Colors.black),
-                  ),
+                  Text(reference, style: TextStyle(color: Colors.black)),
                 ],
               ),
-            SizedBox(height: 16),
+            SizedBox(height: 30),
           ],
         ),
       ),

@@ -21,17 +21,19 @@ class MyApp extends StatelessWidget {
       title: 'Vaccitrack',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF54AF75)),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFF54AF75),
-            overlayColor: Colors.black,
-          ),
-        ),
         scaffoldBackgroundColor: Colors.white,
+        primaryColor: Colors.white,
         useMaterial3: true,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          scrolledUnderElevation:
+              0.0, // This is key to prevent the color change
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+        ),
       ),
-      home: AuthMiddleware()
+      home: AuthMiddleware(),
     );
   }
 }
