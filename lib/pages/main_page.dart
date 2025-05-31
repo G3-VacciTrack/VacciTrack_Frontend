@@ -48,31 +48,30 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    final titles = ['Hello', 'History', 'Appointment', 'User Info'];
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          child: Text(
-            titles[_selectedIndex],
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10.0),
-            child: IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: 'Sign Out',
-              onPressed: () => _signOut(context),
-            ),
-          ),
-        ],
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: Colors.white,
+      //   title: Padding(
+      //     padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      //     child: Text(
+      //       titles[_selectedIndex],
+      //       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
+      //     ),
+      //   ),
+      //   actions: [
+      //     Padding(
+      //       padding: const EdgeInsets.only(right: 10.0),
+      //       child: IconButton(
+      //         icon: const Icon(Icons.logout),
+      //         tooltip: 'Sign Out',
+      //         onPressed: () => _signOut(context),
+      //       ),
+      //     ),
+      //   ],
+      // ),
       body: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 10.0),
         child: _pages[_selectedIndex],
       ),
       bottomNavigationBar: CustomBottomNavigationBar(

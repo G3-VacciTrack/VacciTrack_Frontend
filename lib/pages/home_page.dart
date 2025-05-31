@@ -49,6 +49,7 @@ class _HomePageState extends State<HomePage> {
         setState(() => isLoading = false);
       }
     } catch (e) {
+      debugPrint("Error fetching education data: $e");
       setState(() => isLoading = false);
     }
   }
@@ -81,23 +82,23 @@ class _HomePageState extends State<HomePage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (educationData == null || educationData!['education'] == null) {
+    if (educationData == null || educationData!['education'] is! List) {
       return const Center(child: Text('No data available'));
     }
 
-    final List educations = educationData!['education'];
+    final List educations = educationData!['education'] as List;
 
     if (currentPage == 1) return const HistoryPage();
     if (currentPage == 2) return const AppointmentPage();
 
     // currentPage == 0
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 9),
-          //✅ History Box
+          const SizedBox(height: 9),
+          // History Box
           Align(
             alignment: Alignment.center,
             child: Container(
@@ -128,8 +129,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Lorem Ipsum is simply dummy text of the printing and typesetting industry. '
-                    'Lorem Ipsum has been the industry\'s standard dummy text,',
+                    'Easily keep track of your past vaccinations by adding them to your history. Just enter the vaccine name, date, and any notes to build a complete and organized record—all in one place.',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF6F6F6F),
@@ -142,12 +142,15 @@ class _HomePageState extends State<HomePage> {
                     height: 36,
                     child: ElevatedButton(
                       onPressed: () {
-                        setState(() {
-                          currentPage = 1;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HistoryPage(),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF6CC2A8),
+                        backgroundColor: const Color(0xFF6CC2A8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -168,7 +171,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          //✅ Appointment Box
+          // Appointment Box
           Align(
             alignment: Alignment.center,
             child: Container(
@@ -199,8 +202,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Lorem Ipsum is simply dummy text of the printing and typesetting industry. '
-                    'Lorem Ipsum has been the industry\'s standard dummy text,',
+                    'Stay on top of upcoming vaccines with our appointment system. Schedule future vaccination dates and receive timely reminders, so you never miss an important shot again.',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF6F6F6F),
@@ -218,7 +220,7 @@ class _HomePageState extends State<HomePage> {
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF6CC2A8),
+                        backgroundColor: const Color(0xFF6CC2A8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -239,7 +241,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          //✅ Recommended Vaccines by Age
+          // Recommended Vaccines by Age
           const Padding(
             padding: EdgeInsets.only(bottom: 12),
             child: Text(
@@ -251,7 +253,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          //✅ Card
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -273,7 +274,7 @@ class _HomePageState extends State<HomePage> {
                         child: Card(
                           color: Colors.white,
                           elevation: 10,
-                          shadowColor: Colors.black.withOpacity(0.5),
+                          shadowColor: Colors.black.withOpacity(0.3),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(40),
                           ),
@@ -312,7 +313,7 @@ class _HomePageState extends State<HomePage> {
                                             horizontal: 12,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Color(0xFF33354C),
+                                            color: const Color(0xFF33354C),
                                             borderRadius: BorderRadius.circular(
                                               20,
                                             ),
