@@ -3,6 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vaccitrack_frontend/pages/appointment_page.dart';
+import 'package:vaccitrack_frontend/pages/history_page.dart';
 
 import './education_detail_page.dart';
 
@@ -18,6 +20,7 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   String name = "";
   String errorMessage = '';
+  int currentPage = 0; // 0 = หน้าแรก, 1 = HistoryPage, 2 = AppointmentPage
   static final String baseUrl =
       dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
 
@@ -73,8 +76,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget renderPageContent() {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -85,56 +87,290 @@ class _HomePageState extends State<HomePage> {
 
     final List educations = educationData!['education'];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Hello $name!',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
-        ),
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: educations.length,
-        itemBuilder: (context, index) {
-          final item = educations[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EducationDetailPage(data: item),
-                ),
-              );
-            },
-            child: Card(
+    if (currentPage == 1) return const HistoryPage();
+    if (currentPage == 2) return const AppointmentPage();
+
+    // currentPage == 0
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          //✅ History Box
+          Align(
+            alignment: Alignment.center,
+            child: Container(
+              width: 350,
               margin: const EdgeInsets.only(bottom: 24),
-              elevation: 4,
+              padding: const EdgeInsets.fromLTRB(25, 20, 25, 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (item['cover'] != null)
-                    Image.asset(
-                      'assets/images/${item['cover']}.png',
-                      width: double.infinity,
-                      height: 200,
-                      fit: BoxFit.cover,
+                  const Text(
+                    'History',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF33354C),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      item['title'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Lorem Ipsum is simply dummy text of the printing and typesetting industry. '
+                    'Lorem Ipsum has been the industry\'s standard dummy text,',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6F6F6F),
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          currentPage = 1;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF6CC2A8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        elevation: 0,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Text(
+                        'Add Vaccine History',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          );
-        },
+          ),
+          //✅ Appointment Box
+          Align(
+            alignment: Alignment.center,
+            child: Container(
+              width: 350,
+              margin: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.fromLTRB(25, 20, 25, 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Appointment',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF33354C),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Lorem Ipsum is simply dummy text of the printing and typesetting industry. '
+                    'Lorem Ipsum has been the industry\'s standard dummy text,',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6F6F6F),
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          currentPage = 2;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF6CC2A8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        elevation: 0,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Text(
+                        'Create Appointment',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          //✅ Recommended Vaccines by Age
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Recommended Vaccines by Age',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF33354C),
+              ),
+            ),
+          ),
+          //✅ Card
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children:
+                  educations.map((item) {
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EducationDetailPage(data: item),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 16, bottom: 16),
+                        width: 180,
+                        height: 230,
+                        child: Card(
+                          color: Colors.white,
+                          elevation: 10,
+                          shadowColor: Colors.black.withOpacity(0.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(15),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                if (item['cover'] != null)
+                                  Image.asset(
+                                    'assets/images/${item['cover']}.png',
+                                    width: double.infinity,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                  ),
+                                Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Align(
+                                    alignment: Alignment.center,
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          item['title'] ?? '',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 160,
+                                          margin: const EdgeInsets.only(top: 3),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 6,
+                                            horizontal: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFF33354C),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            item['subtitle'] ?? 'Subtitle here',
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title:
+            currentPage == 0
+                ? Text(
+                  'Hello $name!',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 32,
+                  ),
+                )
+                : const Text(''), // หรือจะไม่ใส่ Text ก็ได้
+        leading:
+            currentPage != 0
+                ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    setState(() {
+                      currentPage = 0;
+                    });
+                  },
+                )
+                : null,
+      ),
+      body: renderPageContent(),
     );
   }
 }
