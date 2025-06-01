@@ -233,7 +233,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
               final user = snapshot.data!;
               return SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 31.0, vertical: 94.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 31.0, vertical: 0.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
