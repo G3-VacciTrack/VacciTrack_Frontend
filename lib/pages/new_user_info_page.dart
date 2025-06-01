@@ -94,91 +94,243 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Personal Info')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
+      body: SingleChildScrollView(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(31, 94, 31, 24),
+          color: Colors.white,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Please complete your personal info',
-                style: TextStyle(fontSize: 18),
-              ),
-              SizedBox(height: 20),
-
-              // First Name
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'First Name',
-                  border: OutlineInputBorder(),
+              const Text(
+                'Personal Info',
+                style: TextStyle(
+                  color: Color(0xFF33354C),
+                  fontSize: 32,
+                  fontFamily: 'Noto Sans Bengali',
+                  fontWeight: FontWeight.w700,
                 ),
-                validator: (val) =>
-                    val != null && val.isNotEmpty ? null : 'Enter first name',
-                onSaved: (val) => firstName = val!.trim(),
               ),
-              SizedBox(height: 12),
-
-              // Last Name
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Last Name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) =>
-                    val != null && val.isNotEmpty ? null : 'Enter last name',
-                onSaved: (val) => lastName = val!.trim(),
-              ),
-              SizedBox(height: 12),
-
-              // Date of Birth Picker
-              InkWell(
-                onTap: () => _selectDOB(context),
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Date of Birth',
-                    border: OutlineInputBorder(),
-                  ),
-                  child: Text(
-                    dob != null
-                        ? "${dob!.day}/${dob!.month}/${dob!.year}"
-                        : 'Select Date of Birth',
-                    style: TextStyle(
-                      color: dob != null ? Colors.black : Colors.grey,
-                      fontSize: 16,
+              const SizedBox(height: 60),
+              Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabeledTextField('First Name', onSaved: (val) => firstName = val!, validator: (val) => val != null && val.isNotEmpty ? null : 'Enter first name'),
+                    const SizedBox(height: 24),
+                    _buildLabeledTextField('Last Name', onSaved: (val) => lastName = val!, validator: (val) => val != null && val.isNotEmpty ? null : 'Enter last name'),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(child: _buildDOBField(context)),
+                        SizedBox(width: 16),
+                        Expanded(child: _buildGenderDropdown())
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 32),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 21,
+                          height: 21,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Color(0xFFBBBBBB)),
+                          ),
+                        ),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Policy, PDPA ',
+                                style: TextStyle(
+                                  color: Color(0xFF33354C),
+                                  fontSize: 15,
+                                  fontFamily: 'Noto Sans Bengali',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                'Ipsum is simply dummy text of the printing and typesetting industry.',
+                                style: TextStyle(
+                                  color: Color(0xFF6F6F6F),
+                                  fontSize: 11,
+                                  fontFamily: 'Noto Sans Bengali',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    loadingButton(),
+                    if (responseMessage.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: Text(
+                          responseMessage,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              SizedBox(height: 12),
-
-              // Gender Dropdown
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'Gender',
-                  border: OutlineInputBorder(),
-                ),
-                items: ['Male', 'Female']
-                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                    .toList(),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Select gender' : null,
-                onChanged: (val) => gender = val ?? gender,
-                onSaved: (val) => gender = val ?? gender,
-              ),
-              SizedBox(height: 20),
-
-              ElevatedButton(onPressed: _submit, child: Text('Submit')),
-
-              if (responseMessage.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: Text(
-                    responseMessage,
-                    style: TextStyle(color: Colors.blueGrey),
-                  ),
-                ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabeledTextField(String label, {required FormFieldSetter<String> onSaved, required FormFieldValidator<String> validator}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF33354C),
+            fontSize: 15.93,
+            fontFamily: 'Noto Sans Bengali',
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          onSaved: onSaved,
+          validator: validator,
+          decoration: InputDecoration(
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Color(0xFFBBBBBB)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Color(0xFFBBBBBB), width: 1.5),
+            ),
+            
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFBBBBBB)),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDOBField(BuildContext context) {
+    return SizedBox(
+      width: 137,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Age',
+            style: TextStyle(
+              color: Color(0xFF33354C),
+              fontSize: 15.93,
+              fontFamily: 'Noto Sans Bengali',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () => _selectDOB(context),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              height: 44,
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFFBBBBBB), width: 1.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                dob != null ? "${dob!.day}/${dob!.month}/${dob!.year}" : 'Select Date',
+                style: TextStyle(
+                  color: dob != null ? Colors.black : Colors.grey,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenderDropdown() {
+    return SizedBox(
+      width: 137,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Gender',
+            style: TextStyle(
+              color: Color(0xFF33354C),
+              fontSize: 15.93,
+              fontFamily: 'Noto Sans Bengali',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: gender,
+            items: ['Male', 'Female']
+                .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                .toList(),
+            onChanged: (val) => setState(() => gender = val ?? gender),
+            onSaved: (val) => gender = val ?? gender,
+            decoration: InputDecoration(
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Color(0xFFBBBBBB)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Color(0xFFBBBBBB), width: 1.5),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Color(0xFFBBBBBB)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget loadingButton() {
+    return GestureDetector(
+      onTap: _submit,
+      child: Container(
+        height: 44,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: const Color(0xFF6CC2A8),
+          borderRadius: BorderRadius.circular(22),
+        ),
+        alignment: Alignment.center,
+        child: const Text(
+          'Submit',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontFamily: 'Noto Sans Bengali',
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
