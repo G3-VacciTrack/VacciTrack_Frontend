@@ -17,18 +17,32 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color(0xFF6CC2A8); // your custom green color
+    const backgroundColor = Colors.white;
+
     return MaterialApp(
       title: 'Vaccitrack',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.white,
-        primaryColor: Colors.white,
         useMaterial3: true,
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.white,
+        colorScheme: ColorScheme(
+          brightness: Brightness.light,
+          primary: primaryColor,
+          onPrimary: Colors.white,
+          secondary: primaryColor,
+          onSecondary: Colors.white,
+          background: backgroundColor,
+          onBackground: Colors.black,
+          surface: backgroundColor,
+          onSurface: Colors.black,
+          error: Colors.red,
+          onError: Colors.white,
+        ),
+        scaffoldBackgroundColor: backgroundColor,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: backgroundColor,
           foregroundColor: Colors.black,
-          scrolledUnderElevation:
-              0.0, // This is key to prevent the color change
+          scrolledUnderElevation: 0.0,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
         ),

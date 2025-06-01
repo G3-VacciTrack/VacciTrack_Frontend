@@ -5,6 +5,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import '../models/appointment_record.dart';
+import '../components/custom_vaccine_appointment_card.dart';
+import '../components/custom_appointment_popup.dart';
+import 'package:intl/intl.dart';
+
 class AppointmentPage extends StatefulWidget {
   const AppointmentPage({Key? key}) : super(key: key);
 
@@ -15,8 +20,9 @@ class AppointmentPage extends StatefulWidget {
 class _AppointmentPageState extends State<AppointmentPage> {
   static final String baseUrl =
       dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
+
   String errorMessage = '';
-  late Future<List<dynamic>> futureAppointments;
+  late Future<List<AppointmentRecord>> futureAppointments;
 
   @override
   void initState() {
@@ -29,9 +35,14 @@ class _AppointmentPageState extends State<AppointmentPage> {
     return prefs.getString('user_id');
   }
 
-  Future<List<dynamic>> fetchAppointments() async {
+  Future<List<AppointmentRecord>> fetchAppointments() async {
     final uid = await getUserId();
-    if (uid == null) return [];
+    if (uid == null) {
+      setState(() {
+        errorMessage = 'User not logged in.';
+      });
+      return [];
+    }
 
     final url = Uri.parse('$baseUrl/appointment/all?uid=$uid');
     try {
@@ -44,78 +55,119 @@ class _AppointmentPageState extends State<AppointmentPage> {
         final jsonResponse = json.decode(response.body);
         if (jsonResponse['appointment'] != null &&
             jsonResponse['appointment'] is List) {
-          return jsonResponse['appointment'] as List<dynamic>;
+          return (jsonResponse['appointment'] as List)
+              .map((item) => AppointmentRecord.fromJson(item))
+              .toList();
         } else {
           setState(() {
-            errorMessage = 'No appointment data found';
+            errorMessage = 'No appointments found.';
           });
           return [];
         }
       } else {
-        throw Exception('Failed to load appointments');
+        throw Exception('Failed to load appointments: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching appointments: $e');
+      setState(() {
+        errorMessage = 'Failed to connect to server or parse data.';
+      });
       return [];
+    }
+  }
+
+  String formatDate(String dateTimeString) {
+    try {
+      final dt = DateTime.parse(dateTimeString);
+      final formatter = DateFormat('d MMM yyyy');
+      return formatter.format(dt);
+    } catch (_) {
+      return dateTimeString;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Appointments',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: FutureBuilder<List<dynamic>>(
+      body: FutureBuilder<List<AppointmentRecord>>(
         future: futureAppointments,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text('Error: ${snapshot.error}\n$errorMessage'),
+            );
           } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-            return const Center(child: Text('No appointments found.'));
+            return Center(
+              child: Text(
+                errorMessage.isNotEmpty
+                    ? errorMessage
+                    : 'No upcoming appointments.',
+              ),
+            );
           } else {
             final appointments = snapshot.data!;
-            return ListView.builder(
-              itemCount: appointments.length,
-              itemBuilder: (context, index) {
-                final appt = appointments[index];
+            appointments.sort(
+              (a, b) =>
+                  DateTime.parse(a.date).compareTo(DateTime.parse(b.date)),
+            );
 
-                // Parse the UNIX timestamp _seconds to DateTime
-                DateTime? dateTime;
-                if (appt['date'] != null && appt['date']['_seconds'] != null) {
-                  dateTime = DateTime.fromMillisecondsSinceEpoch(
-                    appt['date']['_seconds'] * 1000,
-                  );
-                }
-
-                // Format date string or fallback
-                final dateStr =
-                    dateTime != null
-                        ? '${dateTime.day}/${dateTime.month}/${dateTime.year}'
-                        : 'Unknown Date';
-
-                final vaccineName = appt['vaccineName'] ?? 'Unknown Vaccine';
-                final description = appt['description'] ?? '';
-                final location = appt['location'] ?? 'Unknown Location';
-                final dose = appt['dose'] ?? '';
-
-                return ListTile(
-                  title: Text('$vaccineName - $dose'),
-                  subtitle: Text('$dateStr\n$location\n$description'),
-                  isThreeLine: true,
-                );
-              },
+            return SafeArea(
+              top: false,
+              child: CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    title: const Text(
+                      'Appointment',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 32,
+                      ),
+                    ),
+                    backgroundColor: Colors.white,
+                    elevation: 0,
+                    scrolledUnderElevation: 0.0,
+                    surfaceTintColor: Colors.transparent,
+                    pinned: true,
+                    floating: false,
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final appt = appointments[index];
+                      return VaccineAppointmentCard(
+                        appointmentId: appt.id,
+                        vaccineName: appt.vaccineName,
+                        hospital: appt.location,
+                        date: formatDate(appt.date),
+                        description: appt.description ?? '',
+                        dose: appt.dose,
+                      );
+                    }, childCount: appointments.length),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
+              ),
             );
           }
         },
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showAddAppointmentDialog(context);
+        },
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          "Add Appointment",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+            fontSize: 16,
+          ),
+        ),
+        backgroundColor: const Color(0xFF6CC2A8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

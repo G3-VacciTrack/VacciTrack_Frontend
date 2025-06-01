@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 import '../components/custom_bottom_navigation.dart';
 
@@ -48,18 +45,9 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    final titles = ['Hello', 'History', 'Appointment', 'User Info'];
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          child: Text(
-            titles[_selectedIndex],
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
-          ),
-        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 10.0),
@@ -72,7 +60,7 @@ class _MainPageState extends State<MainPage> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 10.0),
         child: _pages[_selectedIndex],
       ),
       bottomNavigationBar: CustomBottomNavigationBar(

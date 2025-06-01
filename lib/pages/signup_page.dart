@@ -15,6 +15,8 @@ class _SignUpPageState extends State<SignUpPage> {
   String confirmPassword = '';
   String error = '';
   bool loading = false;
+  bool _passwordVisible = false;
+  bool _confirmPasswordVisible = false;
 
   final _passwordController = TextEditingController();
 
@@ -51,9 +53,7 @@ class _SignUpPageState extends State<SignUpPage> {
       backgroundColor: Colors.white,
       body: Center(
         child: Container(
-          width: 440,
-          height: 956,
-          padding: const EdgeInsets.symmetric(horizontal: 31, vertical: 94),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 94),
           child: Stack(
             children: [
               // Back Button
@@ -68,7 +68,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
               // Header Text
               const Positioned(
-                left: 40,
+                left: 50,
                 top: 0,
                 child: Text(
                   'Create New Account',
@@ -81,7 +81,6 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
 
-              // Form
               Positioned(
                 top: 138,
                 left: 20,
@@ -107,7 +106,11 @@ class _SignUpPageState extends State<SignUpPage> {
                           keyboardType: TextInputType.emailAddress,
                           decoration: textFieldDecoration(),
                           onSaved: (val) => email = val!.trim(),
-                          validator: (val) => val != null && val.contains('@') ? null : 'Enter valid email',
+                          validator:
+                              (val) =>
+                                  val != null && val.contains('@')
+                                      ? null
+                                      : 'Enter valid email',
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -115,48 +118,85 @@ class _SignUpPageState extends State<SignUpPage> {
                         label: 'Password',
                         child: TextFormField(
                           controller: _passwordController,
-                          obscureText: true,
-                          decoration: textFieldDecoration(),
+                          obscureText: !_passwordVisible,
+                          decoration: textFieldDecoration().copyWith(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _passwordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _passwordVisible = !_passwordVisible;
+                                });
+                              },
+                            ),
+                          ),
                           onSaved: (val) => password = val!.trim(),
-                          validator: (val) => val != null && val.length >= 6 ? null : 'Password too short',
+                          validator:
+                              (val) =>
+                                  val != null && val.length >= 6
+                                      ? null
+                                      : 'Password too short',
                         ),
                       ),
                       const SizedBox(height: 24),
                       buildLabeledField(
                         label: 'Confirm Password',
                         child: TextFormField(
-                          obscureText: true,
-                          decoration: textFieldDecoration(),
+                          obscureText: !_confirmPasswordVisible,
+                          decoration: textFieldDecoration().copyWith(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _confirmPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _confirmPasswordVisible =
+                                      !_confirmPasswordVisible;
+                                });
+                              },
+                            ),
+                          ),
                           onSaved: (val) => confirmPassword = val!.trim(),
-                          validator: (val) => val != _passwordController.text ? 'Passwords do not match' : null,
+                          validator:
+                              (val) =>
+                                  val != _passwordController.text
+                                      ? 'Passwords do not match'
+                                      : null,
                         ),
                       ),
                       const SizedBox(height: 40),
                       loading
                           ? const CircularProgressIndicator()
                           : GestureDetector(
-                              onTap: submit,
-                              child: Container(
-                                width: 338,
-                                height: 44,
-                                decoration: ShapeDecoration(
-                                  color: const Color(0xFF6CC2A8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(22),
-                                  ),
+                            onTap: submit,
+                            child: Container(
+                              width: 338,
+                              height: 44,
+                              decoration: ShapeDecoration(
+                                color: const Color(0xFF6CC2A8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(22),
                                 ),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  'Register',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontFamily: 'Noto Sans Bengali',
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              ),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'Register',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontFamily: 'Noto Sans Bengali',
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
+                          ),
                       const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -165,7 +205,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             'Have an account?',
                             style: TextStyle(
                               color: Color(0xFF6F6F6F),
-                              fontSize: 11,
+                              fontSize: 13,
                               fontFamily: 'Noto Sans Bengali',
                               fontWeight: FontWeight.w600,
                             ),
@@ -176,14 +216,14 @@ class _SignUpPageState extends State<SignUpPage> {
                               'Sign In',
                               style: TextStyle(
                                 color: Color(0xFF6CC2A8),
-                                fontSize: 11,
+                                fontSize: 13,
                                 fontFamily: 'Noto Sans Bengali',
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                          )
+                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -221,17 +261,11 @@ class _SignUpPageState extends State<SignUpPage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(
-          color: Color(0xFFBBBBBB),
-          width: 1.2,
-        ),
+        borderSide: const BorderSide(color: Color(0xFFBBBBBB), width: 1.2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(
-          color: Color(0xFFBBBBBB),
-          width: 1.2,
-        ),
+        borderSide: const BorderSide(color: Color(0xFFBBBBBB), width: 1.2),
       ),
     );
   }
