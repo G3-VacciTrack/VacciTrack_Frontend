@@ -14,7 +14,7 @@ class EducationDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text("Vaccines for " + data['title'] ?? 'Detail')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -22,7 +22,7 @@ class EducationDetailPage extends StatelessWidget {
               Image.asset(
                 'assets/images/${data['cover']}.png',
                 width: double.infinity,
-                height: 200,
+                height: 250,
                 fit: BoxFit.cover,
               ),
             SizedBox(height: 16),

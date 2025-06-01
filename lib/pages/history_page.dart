@@ -44,9 +44,7 @@ class _HistoryPageState extends State<HistoryPage> {
       return [];
     }
 
-    final url = Uri.parse(
-      '$baseUrl/history/all?uid=$uid',
-    );
+    final url = Uri.parse('$baseUrl/history/all?uid=$uid');
     try {
       final response = await http.get(
         url,
@@ -70,9 +68,6 @@ class _HistoryPageState extends State<HistoryPage> {
         throw Exception('Failed to load history: ${response.statusCode}');
       }
     } catch (e) {
-      print(
-        'Error fetching history: $e',
-      );
       setState(() {
         errorMessage = 'Failed to connect to server or parse data.';
       });
@@ -120,8 +115,7 @@ class _HistoryPageState extends State<HistoryPage> {
         years.add(dt.year.toString());
       } catch (_) {}
     }
-    final sorted =
-        years.toList()..sort((a, b) => b.compareTo(a));
+    final sorted = years.toList()..sort((a, b) => b.compareTo(a));
     return sorted;
   }
 
@@ -147,9 +141,7 @@ class _HistoryPageState extends State<HistoryPage> {
             );
           } else {
             history = snapshot.data! as List<HistoryRecord>;
-            final years = extractAvailableYears(
-              history,
-            );
+            final years = extractAvailableYears(history);
             final filteredHistory =
                 selectedYear == null
                     ? history
@@ -158,9 +150,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       return date?.year.toString() == selectedYear;
                     }).toList();
 
-            final groupedHistory = groupByDate(
-              filteredHistory,
-            );
+            final groupedHistory = groupByDate(filteredHistory);
 
             return SafeArea(
               top: false,
@@ -176,10 +166,8 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                     backgroundColor: Colors.white,
                     elevation: 0,
-                    scrolledUnderElevation:
-                        0.0,
-                    surfaceTintColor:
-                        Colors.transparent,
+                    scrolledUnderElevation: 0.0,
+                    surfaceTintColor: Colors.transparent,
                     pinned: true,
                     floating: false,
                   ),
@@ -194,92 +182,81 @@ class _HistoryPageState extends State<HistoryPage> {
                             children: [
                               Row(
                                 mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Text(
-                                    'Year',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
+                                children: [
+                                  PopupMenuButton<String>(
+                                    color: Colors.white,
+                                    onSelected: (String year) {
+                                      setState(() {
+                                        selectedYear =
+                                            year == 'All' ? null : year;
+                                      });
+                                    },
+                                    itemBuilder: (BuildContext context) {
+                                      final items = [
+                                        'All',
+                                        ...extractAvailableYears(history),
+                                      ];
+                                      return items.map((year) {
+                                        return PopupMenuItem<String>(
+                                          value: year,
+                                          child: Text(
+                                            year,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList();
+                                    },
+                                    offset: const Offset(0, 36),
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      width: 130,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF6CC2A8),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(
+                                              0.15,
+                                            ),
+                                            spreadRadius: 1,
+                                            blurRadius: 5,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            selectedYear ??
+                                                'Select Year',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(
+                                            Icons.arrow_drop_down,
+                                            color: Colors.white,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(width: 4),
-                                  Icon(
-                                    Icons.filter_list,
-                                    color: Colors.black54,
-                                    size: 20,
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
-                              PopupMenuButton<String>(
-                                color: Colors.white,
-                                onSelected: (String year) {
-                                  setState(() {
-                                    selectedYear = year == 'All' ? null : year;
-                                  });
-                                },
-                                itemBuilder: (BuildContext context) {
-                                  final items = [
-                                    'All',
-                                    ...extractAvailableYears(history),
-                                  ];
-                                  return items.map((year) {
-                                    return PopupMenuItem<String>(
-                                      value: year,
-                                      child: Text(
-                                        year,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList();
-                                },
-                                offset: const Offset(0, 36),
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  width: 100,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF6CC2A8),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.15),
-                                        spreadRadius: 1,
-                                        blurRadius: 5,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        selectedYear ?? 'All',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(
-                                        Icons.arrow_drop_down,
-                                        color: Colors.white,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 6),
                               const Text(
                                 '*Display only years with data',
                                 style: TextStyle(
@@ -293,9 +270,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 8),
-                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
                   SliverList(
                     delegate: SliverChildListDelegate(
                       groupedHistory.entries.map((entry) {
@@ -322,12 +297,14 @@ class _HistoryPageState extends State<HistoryPage> {
                               ),
                             ),
                             ...records.map(
-                              (record) => VaccineHistoryTile(
+                              (record) => VaccineHistoryCard(
+                                historyId: record.id,
                                 vaccineName: record.vaccineName,
                                 hospital: record.location,
                                 dose: int.tryParse(record.dose) ?? 1,
                                 totalDose:
                                     int.tryParse(record.totalDose ?? '') ?? 1,
+                                description: record.description ?? '',
                               ),
                             ),
                           ],
