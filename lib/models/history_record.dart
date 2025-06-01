@@ -5,6 +5,7 @@ class HistoryRecord {
   final String location;
   final String vaccineName;
   final String? totalDose;
+  final String? description;
 
   HistoryRecord({
     required this.id,
@@ -13,6 +14,7 @@ class HistoryRecord {
     required this.location,
     required this.vaccineName,
     this.totalDose,
+    this.description,
   });
 
   factory HistoryRecord.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class HistoryRecord {
       location: json['location'] ?? '',
       vaccineName: json['vaccineName'] ?? '',
       totalDose: json['totalDose']?.toString(),
+      description: json['description'] ?? '',
     );
   }
 }

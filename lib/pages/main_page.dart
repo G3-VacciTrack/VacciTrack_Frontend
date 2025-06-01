@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 import '../components/custom_bottom_navigation.dart';
 
@@ -50,26 +47,18 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      // appBar: AppBar(
-      //   backgroundColor: Colors.white,
-      //   title: Padding(
-      //     padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      //     child: Text(
-      //       titles[_selectedIndex],
-      //       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
-      //     ),
-      //   ),
-      //   actions: [
-      //     Padding(
-      //       padding: const EdgeInsets.only(right: 10.0),
-      //       child: IconButton(
-      //         icon: const Icon(Icons.logout),
-      //         tooltip: 'Sign Out',
-      //         onPressed: () => _signOut(context),
-      //       ),
-      //     ),
-      //   ],
-      // ),
+      appBar: AppBar(
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 10.0),
+            child: IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Sign Out',
+              onPressed: () => _signOut(context),
+            ),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10.0),
         child: _pages[_selectedIndex],

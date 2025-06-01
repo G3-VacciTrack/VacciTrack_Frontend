@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
-class VaccineHistoryCard extends StatelessWidget {
-  final String historyId;
+class VaccineAppointmentCard extends StatelessWidget {
+  final String appointmentId;
+  final String date;
+  final String description;
   final String vaccineName;
   final String hospital;
   final int dose;
-  final int totalDose;
-  final String description;
 
-  const VaccineHistoryCard({
+  const VaccineAppointmentCard({
     super.key,
-    required this.historyId,
+    required this.appointmentId,
+    required this.date,
+    required this.description,
     required this.vaccineName,
     required this.hospital,
     required this.dose,
-    required this.totalDose,
-    required this.description
   });
 
   @override
@@ -61,21 +61,18 @@ class VaccineHistoryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 const Text(
-                  "Dose",
+                  "Date",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$dose / $totalDose',
+                  '$date ',
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
                 ),
               ],
             ),
           ],
         ),
-        onTap: () {
-          // Optional: Navigate to detail
-        },
       ),
     );
   }

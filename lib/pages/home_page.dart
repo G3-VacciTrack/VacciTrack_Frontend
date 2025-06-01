@@ -91,14 +91,12 @@ class _HomePageState extends State<HomePage> {
     if (currentPage == 1) return const HistoryPage();
     if (currentPage == 2) return const AppointmentPage();
 
-    // currentPage == 0
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 9),
-          // History Box
           Align(
             alignment: Alignment.center,
             child: Container(
@@ -171,7 +169,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          // Appointment Box
           Align(
             alignment: Alignment.center,
             child: Container(
@@ -215,9 +212,12 @@ class _HomePageState extends State<HomePage> {
                     height: 36,
                     child: ElevatedButton(
                       onPressed: () {
-                        setState(() {
-                          currentPage = 2;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AppointmentPage(),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6CC2A8),
@@ -241,7 +241,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          // Recommended Vaccines by Age
           const Padding(
             padding: EdgeInsets.only(bottom: 12),
             child: Text(
@@ -268,16 +267,28 @@ class _HomePageState extends State<HomePage> {
                         );
                       },
                       child: Container(
-                        margin: const EdgeInsets.only(right: 16, bottom: 16),
+                        margin: const EdgeInsets.only(
+                          top: 10,
+                          left: 7,
+                          right: 16,
+                          bottom: 16,
+                        ),
                         width: 180,
-                        height: 230,
-                        child: Card(
+                        height: 210,
+                        decoration: BoxDecoration(
                           color: Colors.white,
-                          elevation: 10,
-                          shadowColor: Colors.black.withOpacity(0.3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
+                          borderRadius: BorderRadius.circular(40),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              offset: const Offset(0, 0),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(40),
                           child: Padding(
                             padding: const EdgeInsets.all(15),
                             child: Column(
@@ -291,44 +302,33 @@ class _HomePageState extends State<HomePage> {
                                     height: 100,
                                     fit: BoxFit.cover,
                                   ),
-                                Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          item['title'] ?? '',
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 160,
-                                          margin: const EdgeInsets.only(top: 3),
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 6,
-                                            horizontal: 12,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF33354C),
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            item['subtitle'] ?? 'Subtitle here',
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                const SizedBox(height: 12),
+                                Text(
+                                  item['title'] ?? '',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  width: 130,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                    horizontal: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF33354C),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    item['subtitle'] ?? 'Subtitle here',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
@@ -359,7 +359,7 @@ class _HomePageState extends State<HomePage> {
                     fontSize: 32,
                   ),
                 )
-                : const Text(''), // หรือจะไม่ใส่ Text ก็ได้
+                : const Text(''),
         leading:
             currentPage != 0
                 ? IconButton(

@@ -20,6 +20,7 @@ class _SignInPageState extends State<SignInPage> {
   String password = '';
   String error = '';
   bool loading = false;
+  bool _obscurePassword = true;
 
   Future<void> submit() async {
     final form = _formKey.currentState;
@@ -36,7 +37,8 @@ class _SignInPageState extends State<SignInPage> {
       final isNew = result['isNewUser'] == true;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-            builder: (_) => isNew ? NewUserInfoPage() : MainPage()),
+          builder: (_) => isNew ? NewUserInfoPage() : MainPage(),
+        ),
       );
     } else {
       setState(() {
@@ -60,7 +62,8 @@ class _SignInPageState extends State<SignInPage> {
       final isNew = result['isNewUser'] == true;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-            builder: (_) => isNew ? NewUserInfoPage() : MainPage()),
+          builder: (_) => isNew ? NewUserInfoPage() : MainPage(),
+        ),
       );
     } else {
       setState(() {
@@ -80,17 +83,11 @@ class _SignInPageState extends State<SignInPage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(
-          color: Color(0xFFBBBBBB),
-          width: 1.2,
-        ),
+        borderSide: const BorderSide(color: Color(0xFFBBBBBB), width: 1.2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(
-          color: Color(0xFFBBBBBB),
-          width: 1.2,
-        ),
+        borderSide: const BorderSide(color: Color(0xFFBBBBBB), width: 1.2),
       ),
     );
   }
@@ -131,38 +128,75 @@ class _SignInPageState extends State<SignInPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Email',
-                            style: TextStyle(
-                              color: const Color(0xFF33354C),
-                              fontSize: 15.93,
-                              fontFamily: 'Noto Sans Bengali',
-                              fontWeight: FontWeight.w700,
-                            )),
+                        Text(
+                          'Email',
+                          style: TextStyle(
+                            color: const Color(0xFF33354C),
+                            fontSize: 15.93,
+                            fontFamily: 'Noto Sans Bengali',
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         SizedBox(height: 8),
                         TextFormField(
-                          decoration: textFieldDecoration(),
+                          decoration: textFieldDecoration().copyWith(
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF6CC2A8),
+                                width: 1.8,
+                              ),
+                            ),
+                          ),
                           keyboardType: TextInputType.emailAddress,
                           onSaved: (val) => email = val!.trim(),
-                          validator: (val) => val != null && val.contains('@')
-                              ? null
-                              : 'Enter a valid email',
+                          validator:
+                              (val) =>
+                                  val != null && val.contains('@')
+                                      ? null
+                                      : 'Enter a valid email',
                         ),
                         SizedBox(height: 24),
-                        Text('Password',
-                            style: TextStyle(
-                              color: const Color(0xFF33354C),
-                              fontSize: 15.93,
-                              fontFamily: 'Noto Sans Bengali',
-                              fontWeight: FontWeight.w700,
-                            )),
+                        Text(
+                          'Password',
+                          style: TextStyle(
+                            color: const Color(0xFF33354C),
+                            fontSize: 15.93,
+                            fontFamily: 'Noto Sans Bengali',
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         SizedBox(height: 8),
                         TextFormField(
-                          decoration: textFieldDecoration(),
-                          obscureText: true,
+                          decoration: textFieldDecoration().copyWith(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF6CC2A8),
+                                width: 1.8,
+                              ),
+                            ),
+                          ),
+                          obscureText: _obscurePassword,
                           onSaved: (val) => password = val!.trim(),
-                          validator: (val) => val != null && val.length >= 6
-                              ? null
-                              : 'Password must be 6+ chars',
+                          validator:
+                              (val) =>
+                                  val != null && val.length >= 6
+                                      ? null
+                                      : 'Password must be 6+ chars',
                         ),
                         SizedBox(height: 32),
                         if (error.isNotEmpty)
@@ -176,25 +210,57 @@ class _SignInPageState extends State<SignInPage> {
                         loading
                             ? Center(child: CircularProgressIndicator())
                             : ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFF6CC2A8),
-                                  minimumSize: Size(double.infinity, 44),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(22),
-                                  ),
-                                ),
-                                onPressed: submit,
-                                child: Text(
-                                  'Sign In',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontFamily: 'Noto Sans Bengali',
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFF6CC2A8),
+                                minimumSize: Size(double.infinity, 44),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(22),
                                 ),
                               ),
-                        SizedBox(height: 16),
+                              onPressed: submit,
+                              child: Text(
+                                'Sign In',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontFamily: 'Noto Sans Bengali',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        SizedBox(height: 12),
+                        SizedBox(
+                          height: 20,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Divider(
+                                  thickness: 1,
+                                  color: Colors.grey,
+                                  indent: 16,
+                                  endIndent: 8,
+                                ),
+                              ),
+                              const Text(
+                                'Or',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Expanded(
+                                child: Divider(
+                                  thickness: 1,
+                                  color: Colors.grey,
+                                  indent: 8,
+                                  endIndent: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: handleGoogleSignIn,
                           style: ElevatedButton.styleFrom(
@@ -209,13 +275,15 @@ class _SignInPageState extends State<SignInPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Sign In with',
-                                  style: TextStyle(
-                                    color: const Color(0xFF6CC2A8),
-                                    fontSize: 14,
-                                    fontFamily: 'Noto Sans Bengali',
-                                    fontWeight: FontWeight.w600,
-                                  )),
+                              Text(
+                                'Sign In with',
+                                style: TextStyle(
+                                  color: const Color(0xFF6CC2A8),
+                                  fontSize: 14,
+                                  fontFamily: 'Noto Sans Bengali',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               SizedBox(width: 8),
                               Iconify(Logos.google, size: 20),
                             ],
@@ -225,28 +293,35 @@ class _SignInPageState extends State<SignInPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('Don’t have an account?',
-                                style: TextStyle(
-                                  color: const Color(0xFF6F6F6F),
-                                  fontSize: 11,
-                                  fontFamily: 'Noto Sans Bengali',
-                                  fontWeight: FontWeight.w600,
-                                )),
+                            Text(
+                              'Don’t have an account?',
+                              style: TextStyle(
+                                color: const Color(0xFF6F6F6F),
+                                fontSize: 13,
+                                fontFamily: 'Noto Sans Bengali',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             TextButton(
                               onPressed: () {
-                                Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (_) => SignUpPage()));
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => SignUpPage(),
+                                  ),
+                                );
                               },
-                              child: Text('Register Now',
-                                  style: TextStyle(
-                                    color: const Color(0xFF6CC2A8),
-                                    fontSize: 11,
-                                    fontFamily: 'Noto Sans Bengali',
-                                    fontWeight: FontWeight.w600,
-                                  )),
-                            )
+                              child: Text(
+                                'Register Now',
+                                style: TextStyle(
+                                  color: const Color(0xFF6CC2A8),
+                                  fontSize: 13,
+                                  fontFamily: 'Noto Sans Bengali',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                           ],
-                        )
+                        ),
                       ],
                     ),
                   ),
