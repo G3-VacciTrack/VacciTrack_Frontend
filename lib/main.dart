@@ -17,9 +17,8 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF6CC2A8); // your custom green color
+    const primaryColor = Color(0xFF6CC2A8);
     const backgroundColor = Colors.white;
-
     return MaterialApp(
       title: 'Vaccitrack',
       debugShowCheckedModeBanner: false,
