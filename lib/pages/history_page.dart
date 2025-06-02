@@ -118,184 +118,185 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<HistoryRecord>>(
-        future: futureHistory,
-        builder: (context, snapshot) {
-          List<Widget> sliverList = [
-            SliverAppBar(
-              title: const Text(
-                'History',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 32,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: FutureBuilder<List<HistoryRecord>>(
+          future: futureHistory,
+          builder: (context, snapshot) {
+            List<Widget> sliverList = [
+              SliverAppBar(
+                title: const Text(
+                  'History',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
                 ),
+                backgroundColor: Colors.white,
+                elevation: 0,
+                scrolledUnderElevation: 0.0,
+                surfaceTintColor: Colors.transparent,
+                pinned: true,
+                floating: false,
               ),
-              backgroundColor: Colors.white,
-              elevation: 0,
-              scrolledUnderElevation: 0.0,
-              surfaceTintColor: Colors.transparent,
-              pinned: true,
-              floating: false,
-            ),
-          ];
+            ];
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            sliverList.add(
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            );
-          } else if (snapshot.hasError || errorMessage.isNotEmpty) {
-            sliverList.add(
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Text(
-                    errorMessage.isNotEmpty
-                        ? errorMessage
-                        : 'Error: ${snapshot.error}',
-                    textAlign: TextAlign.center,
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              sliverList.add(
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            } else if (snapshot.hasError || errorMessage.isNotEmpty) {
+              sliverList.add(
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text(
+                      errorMessage.isNotEmpty
+                          ? errorMessage
+                          : 'Error: ${snapshot.error}',
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
-              ),
-            );
-          } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-            sliverList.add(
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Text(
-                    'No vaccination history found.',
-                    style: TextStyle(fontSize: 16),
+              );
+            } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+              sliverList.add(
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text(
+                      'No vaccination history found.',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                 ),
-              ),
-            );
-          } else {
-            history = snapshot.data!;
-            final years = extractAvailableYears(history);
-            final filteredHistory = selectedYear == null
-                ? history
-                : history.where((h) {
-                    final date = DateTime.tryParse(h.date);
-                    return date?.year.toString() == selectedYear;
-                  }).toList();
-            final groupedHistory = groupByDate(filteredHistory);
+              );
+            } else {
+              history = snapshot.data!;
+              final years = extractAvailableYears(history);
+              final filteredHistory =
+                  selectedYear == null
+                      ? history
+                      : history.where((h) {
+                        final date = DateTime.tryParse(h.date);
+                        return date?.year.toString() == selectedYear;
+                      }).toList();
+              final groupedHistory = groupByDate(filteredHistory);
 
-            sliverList.add(
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          PopupMenuButton<String>(
-                            color: Colors.white,
-                            onSelected: (String year) {
-                              setState(() {
-                                selectedYear = year == 'All' ? null : year;
-                              });
-                            },
-                            itemBuilder: (BuildContext context) {
-                              final items = ['All', ...years];
-                              return items.map((year) {
-                                return PopupMenuItem<String>(
-                                  value: year,
-                                  child: Text(
-                                    year,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                );
-                              }).toList();
-                            },
-                            offset: const Offset(0, 36),
-                            child: Container(
-                              alignment: Alignment.center,
-                              width: 130,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF6CC2A8),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.grey.shade300,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.15),
-                                    spreadRadius: 1,
-                                    blurRadius: 5,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    selectedYear ?? 'Select Year',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.arrow_drop_down,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            '*Display only years with data',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black45,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-
-            groupedHistory.forEach((isoDate, records) {
-              final displayDate = formatDate(isoDate);
-              sliverList.addAll([
+              sliverList.add(
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      top: 16,
-                    ),
-                    child: Text(
-                      displayDate,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black54,
-                      ),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            PopupMenuButton<String>(
+                              color: Colors.white,
+                              onSelected: (String year) {
+                                setState(() {
+                                  selectedYear = year == 'All' ? null : year;
+                                });
+                              },
+                              itemBuilder: (BuildContext context) {
+                                final items = ['All', ...years];
+                                return items.map((year) {
+                                  return PopupMenuItem<String>(
+                                    value: year,
+                                    child: Text(
+                                      year,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  );
+                                }).toList();
+                              },
+                              offset: const Offset(0, 36),
+                              child: Container(
+                                alignment: Alignment.center,
+                                width: 130,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF6CC2A8),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.15),
+                                      spreadRadius: 1,
+                                      blurRadius: 5,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      selectedYear ?? 'Select Year',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              '*Display only years with data',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black45,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                SliverList(
-                  delegate: SliverChildListDelegate(
-                    records
-                        .map((record) => VaccineHistoryCard(
+              );
+
+              groupedHistory.forEach((isoDate, records) {
+                final displayDate = formatDate(isoDate);
+                sliverList.addAll([
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        top: 16,
+                      ),
+                      child: Text(
+                        displayDate,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverList(
+                    delegate: SliverChildListDelegate(
+                      records
+                          .map(
+                            (record) => VaccineHistoryCard(
                               historyId: record.id,
                               vaccineName: record.vaccineName,
                               hospital: record.location,
@@ -303,21 +304,25 @@ class _HistoryPageState extends State<HistoryPage> {
                               totalDose:
                                   int.tryParse(record.totalDose ?? '') ?? 1,
                               description: record.description ?? '',
-                            ))
-                        .toList(),
+                            ),
+                          )
+                          .toList(),
+                    ),
                   ),
-                ),
-              ]);
-            });
+                ]);
+              });
 
-            sliverList.add(const SliverToBoxAdapter(child: SizedBox(height: 100)));
-          }
+              sliverList.add(
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              );
+            }
 
-          return SafeArea(
-            top: false,
-            child: CustomScrollView(slivers: sliverList),
-          );
-        },
+            return SafeArea(
+              top: false,
+              child: CustomScrollView(slivers: sliverList),
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

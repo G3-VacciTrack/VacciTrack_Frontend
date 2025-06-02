@@ -140,113 +140,119 @@ class _UserInfoPageState extends State<UserInfoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: FutureBuilder<Map<String, dynamic>?>(
-          future: futureUser,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError || snapshot.data == null) {
-              return const Center(child: Text('Failed to load user info.'));
-            } else {
-              final user = snapshot.data!;
-              return SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15.0,
-                    vertical: 5.0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Profile',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF33354C),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: FutureBuilder<Map<String, dynamic>?>(
+            future: futureUser,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError || snapshot.data == null) {
+                return const Center(child: Text('Failed to load user info.'));
+              } else {
+                final user = snapshot.data!;
+                return SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15.0,
+                      vertical: 5.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'Profile',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF33354C),
+                              ),
                             ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.logout),
-                            tooltip: 'Sign Out',
-                            onPressed: () => _signOut(context),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      Center(
-                        child: Container(
-                          width: 330,
-                          child: Column(
-                            children: [
-                              buildProfileRow(
-                                'Name',
-                                '${user['fistName'] ?? ''} ${user['lastName'] ?? ''}',
-                              ),
-                              buildProfileRow(
-                                'Age',
-                                user['age']?.toString() ?? '-',
-                              ),
-                              buildProfileRow('Birthday', user['dob'] ?? '-'),
-                              buildProfileRow('Gender', user['gender'] ?? '-'),
-                            ],
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.logout),
+                              tooltip: 'Sign Out',
+                              onPressed: () => _signOut(context),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Center(
+                          child: Container(
+                            width: 330,
+                            child: Column(
+                              children: [
+                                buildProfileRow(
+                                  'Name',
+                                  '${user['fistName'] ?? ''} ${user['lastName'] ?? ''}',
+                                ),
+                                buildProfileRow(
+                                  'Age',
+                                  user['age']?.toString() ?? '-',
+                                ),
+                                buildProfileRow('Birthday', user['dob'] ?? '-'),
+                                buildProfileRow(
+                                  'Gender',
+                                  user['gender'] ?? '-',
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Family',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF33354C),
-                            ),
-                          ),
-                          ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(
-                              Icons.add,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                            label: const Text(
-                              'Add Member',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF69C6AC),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                        const SizedBox(height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Family',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF33354C),
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              textStyle: const TextStyle(fontSize: 14),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      buildFamilyCard('Chawisa', '21'),
-                      buildFamilyCard('Chawisa', '21'),
-                      buildFamilyCard('Chawisa', '21'),
-                    ],
+                            ElevatedButton.icon(
+                              onPressed: () {},
+                              icon: const Icon(
+                                Icons.add,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                              label: const Text(
+                                'Add Member',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF69C6AC),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                textStyle: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        buildFamilyCard('Chawisa', '21'),
+                        buildFamilyCard('Chawisa', '21'),
+                        buildFamilyCard('Chawisa', '21'),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }
-          },
+                );
+              }
+            },
+          ),
         ),
       ),
     );

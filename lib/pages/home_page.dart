@@ -348,31 +348,34 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title:
-            currentPage == 0
-                ? Text(
-                  'Hello $name!',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 32,
-                  ),
-                )
-                : const Text(''),
-        leading:
-            currentPage != 0
-                ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    setState(() {
-                      currentPage = 0;
-                    });
-                  },
-                )
-                : null,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Scaffold(
+        appBar: AppBar(
+          title:
+              currentPage == 0
+                  ? Text(
+                    'Hello $name!',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 32,
+                    ),
+                  )
+                  : const Text(''),
+          leading:
+              currentPage != 0
+                  ? IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      setState(() {
+                        currentPage = 0;
+                      });
+                    },
+                  )
+                  : null,
+        ),
+        body: renderPageContent(),
       ),
-      body: renderPageContent(),
     );
   }
 }

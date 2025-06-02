@@ -100,78 +100,81 @@ class _AppointmentPageState extends State<AppointmentPage> {
     return Scaffold(
       body: SafeArea(
         top: false,
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              title: const Text(
-                'Appointment',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                title: const Text(
+                  'Appointment',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
+                ),
+                backgroundColor: Colors.white,
+                elevation: 0,
+                scrolledUnderElevation: 0.0,
+                surfaceTintColor: Colors.transparent,
+                pinned: true,
+                floating: false,
               ),
-              backgroundColor: Colors.white,
-              elevation: 0,
-              scrolledUnderElevation: 0.0,
-              surfaceTintColor: Colors.transparent,
-              pinned: true,
-              floating: false,
-            ),
-            SliverFillRemaining(
-              child: FutureBuilder<List<AppointmentRecord>>(
-                future: futureAppointments,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Error: ${snapshot.error}\n$errorMessage'),
-                    );
-                  } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Text(
-                        errorMessage.isNotEmpty
-                            ? errorMessage
-                            : 'No upcoming appointments.',
-                      ),
-                    );
-                  } else if (snapshot.hasData) {
-                    final appointments = snapshot.data!;
-                    appointments.sort(
-                      (a, b) => DateTime.parse(
-                        a.date,
-                      ).compareTo(DateTime.parse(b.date)),
-                    );
-                    return ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 100),
-                      itemCount: appointments.length,
-                      itemBuilder: (context, index) {
-                        final appt = appointments[index];
-                        return GestureDetector(
-                          onTap: () {
-                            showAppointmentDetailsDialog(
-                              context,
-                              appointment: appt,
-                              onAppointmentUpdated: () {
-                                _fetchAppointments(); 
-                              },
-                            );
-                          },
-                          child: VaccineAppointmentCard(
-                            appointmentId: appt.id,
-                            vaccineName: appt.vaccineName,
-                            hospital: appt.location,
-                            date: formatDate(appt.date),
-                            description: appt.description,
-                            dose: appt.dose,
-                          ),
-                        );
-                      },
-                    );
-                  } else {
-                    return const Center(child: Text('No data available.'));
-                  }
-                },
+              SliverFillRemaining(
+                child: FutureBuilder<List<AppointmentRecord>>(
+                  future: futureAppointments,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Error: ${snapshot.error}\n$errorMessage'),
+                      );
+                    } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+                      return Center(
+                        child: Text(
+                          errorMessage.isNotEmpty
+                              ? errorMessage
+                              : 'No upcoming appointments.',
+                        ),
+                      );
+                    } else if (snapshot.hasData) {
+                      final appointments = snapshot.data!;
+                      appointments.sort(
+                        (a, b) => DateTime.parse(
+                          a.date,
+                        ).compareTo(DateTime.parse(b.date)),
+                      );
+                      return ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 100),
+                        itemCount: appointments.length,
+                        itemBuilder: (context, index) {
+                          final appt = appointments[index];
+                          return GestureDetector(
+                            onTap: () {
+                              showAppointmentDetailsDialog(
+                                context,
+                                appointment: appt,
+                                onAppointmentUpdated: () {
+                                  _fetchAppointments(); 
+                                },
+                              );
+                            },
+                            child: VaccineAppointmentCard(
+                              appointmentId: appt.id,
+                              vaccineName: appt.vaccineName,
+                              hospital: appt.location,
+                              date: formatDate(appt.date),
+                              description: appt.description,
+                              dose: appt.dose,
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      return const Center(child: Text('No data available.'));
+                    }
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
