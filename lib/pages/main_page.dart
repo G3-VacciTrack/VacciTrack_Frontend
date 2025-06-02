@@ -45,7 +45,6 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -60,7 +59,7 @@ class _MainPageState extends State<MainPage> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 20),
         child: _pages[_selectedIndex],
       ),
       bottomNavigationBar: CustomBottomNavigationBar(
