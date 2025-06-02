@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   String name = "";
   String errorMessage = '';
-  int currentPage = 0; // 0 = หน้าแรก, 1 = HistoryPage, 2 = AppointmentPage
+  int currentPage = 0;
   static final String baseUrl =
       dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
 
@@ -247,7 +247,7 @@ class _HomePageState extends State<HomePage> {
               'Recommended Vaccines by Age',
               style: TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w700,
                 color: Color(0xFF33354C),
               ),
             ),
@@ -348,31 +348,34 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title:
-            currentPage == 0
-                ? Text(
-                  'Hello $name!',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 32,
-                  ),
-                )
-                : const Text(''),
-        leading:
-            currentPage != 0
-                ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    setState(() {
-                      currentPage = 0;
-                    });
-                  },
-                )
-                : null,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Scaffold(
+        appBar: AppBar(
+          title:
+              currentPage == 0
+                  ? Text(
+                    'Hello $name!',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 32,
+                    ),
+                  )
+                  : const Text(''),
+          leading:
+              currentPage != 0
+                  ? IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      setState(() {
+                        currentPage = 0;
+                      });
+                    },
+                  )
+                  : null,
+        ),
+        body: renderPageContent(),
       ),
-      body: renderPageContent(),
     );
   }
 }
