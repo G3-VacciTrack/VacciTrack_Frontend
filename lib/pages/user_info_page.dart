@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../pages/signin_page.dart';
 
 class UserInfoPage extends StatefulWidget {
   const UserInfoPage({super.key});
@@ -13,13 +14,24 @@ class UserInfoPage extends StatefulWidget {
 }
 
 class _UserInfoPageState extends State<UserInfoPage> {
-  static final String baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
+  static final String baseUrl =
+      dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
   late Future<Map<String, dynamic>?> futureUser;
   String? email;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('user_id');
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    await _auth.signOut();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('did');
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => SignInPage()));
   }
 
   Future<Map<String, dynamic>?> fetchUserInfo() async {
@@ -54,29 +66,26 @@ class _UserInfoPageState extends State<UserInfoPage> {
   }
 
   Widget buildProfileRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF33354C),
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF33354C),
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFF6F6F6F),
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Color(0xFF6F6F6F),
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -106,7 +115,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
                 style: TextStyle(color: Color(0xFF6F6F6F), fontSize: 12),
               ),
               Text(
-                'Chawisa',
+                'Dummy',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ],
@@ -145,33 +154,52 @@ class _UserInfoPageState extends State<UserInfoPage> {
               final user = snapshot.data!;
               return SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15.0,
+                    vertical: 5.0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Profile',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF33354C),
-                        ),
+                      Row(
+                        children: [
+                          const Text(
+                            'Profile',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF33354C),
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.logout),
+                            tooltip: 'Sign Out',
+                            onPressed: () => _signOut(context),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 24),
-Center(
-  child: Container(
-    width: 300,
-    child: Column(
-      children: [
-        buildProfileRow('Name', '${user['fistName'] ?? ''} ${user['lastName'] ?? ''}'),
-        buildProfileRow('Age', user['age']?.toString() ?? '-'),
-        buildProfileRow('Birthday', user['dob'] ?? '-'),
-        buildProfileRow('Gender', user['gender'] ?? '-'),
-      ],
-    ),
-  ),
-),
-const SizedBox(height: 32),
+                      Center(
+                        child: Container(
+                          width: 330,
+                          child: Column(
+                            children: [
+                              buildProfileRow(
+                                'Name',
+                                '${user['fistName'] ?? ''} ${user['lastName'] ?? ''}',
+                              ),
+                              buildProfileRow(
+                                'Age',
+                                user['age']?.toString() ?? '-',
+                              ),
+                              buildProfileRow('Birthday', user['dob'] ?? '-'),
+                              buildProfileRow('Gender', user['gender'] ?? '-'),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -184,23 +212,29 @@ const SizedBox(height: 32),
                             ),
                           ),
                           ElevatedButton.icon(
-  onPressed: () {},
-  icon: const Icon(Icons.add, size: 16, color: Colors.white),
-  label: const Text(
-    'Add Member',
-    style: TextStyle(color: Colors.white),
-  ),
-  style: ElevatedButton.styleFrom(
-    backgroundColor: const Color(0xFF69C6AC),
-    foregroundColor: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    textStyle: const TextStyle(fontSize: 14),
-  ),
-),
-
+                            onPressed: () {},
+                            icon: const Icon(
+                              Icons.add,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              'Add Member',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF69C6AC),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              textStyle: const TextStyle(fontSize: 14),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),

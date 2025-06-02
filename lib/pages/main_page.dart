@@ -19,16 +19,6 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  Future<void> _signOut(BuildContext context) async {
-    await _auth.signOut();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('did');
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => SignInPage()));
-  }
 
   final List<Widget> _pages = [
     HomePage(),
@@ -46,20 +36,8 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10.0),
-            child: IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: 'Sign Out',
-              onPressed: () => _signOut(context),
-            ),
-          ),
-        ],
-      ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 20),
+        padding: const EdgeInsets.fromLTRB(10, 15, 10, 0),
         child: _pages[_selectedIndex],
       ),
       bottomNavigationBar: CustomBottomNavigationBar(

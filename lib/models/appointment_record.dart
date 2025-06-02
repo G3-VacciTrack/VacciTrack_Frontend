@@ -5,6 +5,7 @@ class AppointmentRecord {
   final String description;
   final String id;
   final int dose;
+  final int totalDose;
 
   AppointmentRecord({
     required this.vaccineName,
@@ -13,6 +14,7 @@ class AppointmentRecord {
     required this.description,
     required this.id,
     required this.dose,
+    required this.totalDose,
   });
 
   factory AppointmentRecord.fromJson(Map<String, dynamic> json) {
@@ -33,7 +35,8 @@ class AppointmentRecord {
       description: json['description'] ?? '',
       vaccineName: json['vaccineName'] ?? '',
       location: json['location'] ?? '',
-      dose: json['dose'] ?? '',
+      dose: json['dose'] ?? 1,
+      totalDose: json['totalDose'] ?? 1,
     );
   }
 }

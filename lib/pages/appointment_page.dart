@@ -6,7 +6,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../models/appointment_record.dart';
 import '../components/custom_vaccine_appointment_card.dart';
-import '../components/custom_appointment_popup.dart'; // Make sure this import is correct
+import '../components/custom_create_appointment_dialog.dart'; 
+import '../components/custom_appointment_detail_dialog.dart'; 
 import 'package:intl/intl.dart';
 
 class AppointmentPage extends StatefulWidget {
@@ -26,10 +27,9 @@ class _AppointmentPageState extends State<AppointmentPage> {
   @override
   void initState() {
     super.initState();
-    _fetchAppointments(); // Call a private method for initial fetch
+    _fetchAppointments();
   }
 
-  // Private method to encapsulate fetching logic
   Future<void> _fetchAppointments() async {
     setState(() {
       futureAppointments = fetchAppointments();
@@ -62,7 +62,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
         if (jsonResponse['appointment'] != null &&
             jsonResponse['appointment'] is List) {
           setState(() {
-            errorMessage = ''; // Clear error message on successful fetch
+            errorMessage = '';
           });
           return (jsonResponse['appointment'] as List)
               .map((item) => AppointmentRecord.fromJson(item))
@@ -144,13 +144,24 @@ class _AppointmentPageState extends State<AppointmentPage> {
                       itemCount: appointments.length,
                       itemBuilder: (context, index) {
                         final appt = appointments[index];
-                        return VaccineAppointmentCard(
-                          appointmentId: appt.id,
-                          vaccineName: appt.vaccineName,
-                          hospital: appt.location,
-                          date: formatDate(appt.date),
-                          description: appt.description ?? '',
-                          dose: appt.dose,
+                        return GestureDetector(
+                          onTap: () {
+                            showAppointmentDetailsDialog(
+                              context,
+                              appointment: appt,
+                              onAppointmentUpdated: () {
+                                _fetchAppointments(); 
+                              },
+                            );
+                          },
+                          child: VaccineAppointmentCard(
+                            appointmentId: appt.id,
+                            vaccineName: appt.vaccineName,
+                            hospital: appt.location,
+                            date: formatDate(appt.date),
+                            description: appt.description ?? '',
+                            dose: appt.dose,
+                          ),
                         );
                       },
                     );
@@ -165,9 +176,8 @@ class _AppointmentPageState extends State<AppointmentPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // Pass the callback to refresh the appointments
           showAddAppointmentDialog(context, onAppointmentAdded: () {
-            _fetchAppointments(); // Re-fetch appointments
+            _fetchAppointments();
           });
         },
         icon: const Icon(Icons.add, color: Colors.white),

@@ -4,100 +4,21 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+// Assuming you still need this model, adjust path if necessary
+import '../models/appointment_record.dart';
 
-class AppointmentPopup {
-  static void show({
-    required BuildContext context,
-    String? appointmentId,
-    String? vaccineName,
-    String? hospital,
-    String? date,
-    String? description,
-    int? dose,
-  }) {
-    final vaccineController = TextEditingController(text: vaccineName ?? '');
-    final hospitalController = TextEditingController(text: hospital ?? '');
-    final detailController = TextEditingController(text: description ?? '');
-    final doseController = TextEditingController(text: dose?.toString() ?? '');
-    final dateController = TextEditingController(text: date ?? '');
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Appointment Details'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: vaccineController,
-                  decoration: const InputDecoration(labelText: 'Vaccine Name'),
-                ),
-                TextField(
-                  controller: hospitalController,
-                  decoration: const InputDecoration(labelText: 'Hospital'),
-                ),
-                TextField(
-                  controller: doseController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Dose / Total Dose',
-                  ),
-                ),
-                TextField(
-                  controller: dateController,
-                  decoration: const InputDecoration(labelText: 'Date & Time'),
-                  onTap: () async {
-                    FocusScope.of(context).requestFocus(FocusNode());
-                    DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      dateController.text = picked.toString().split(" ").first;
-                    }
-                  },
-                ),
-                TextField(
-                  controller: detailController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Details (Optional)',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final data = {
-                  "vaccineName": vaccineController.text,
-                  "hospital": hospitalController.text,
-                  "dose": doseController.text,
-                  "date": dateController.text,
-                  "description": detailController.text,
-                };
-                print("Submitted: $data");
-
-                Navigator.of(context).pop();
-              },
-              child: const Text('Submit'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-void showAddAppointmentDialog(BuildContext context, {required Function onAppointmentAdded}) {
+/// This function displays a dialog for adding new appointments.
+///
+/// It collects vaccine details, hospital, dose information, date, time,
+/// and optional details. It handles form validation and API submission.
+///
+/// [context]: The BuildContext from which the dialog is shown.
+/// [onAppointmentAdded]: A callback function to be executed after
+/// a new appointment is successfully added.
+void showAddAppointmentDialog(
+  BuildContext context, {
+  required Function onAppointmentAdded,
+}) {
   final vaccineController = TextEditingController();
   final hospitalController = TextEditingController();
   final doseController = TextEditingController();
@@ -318,26 +239,27 @@ void showAddAppointmentDialog(BuildContext context, {required Function onAppoint
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
-                                      vertical: 10,
                                     ),
+                                    height: 48, // Fixed height for consistency
+                                    alignment: Alignment.centerLeft,
                                     width: double.infinity,
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color:
                                             selectedDate == null
-                                                ? Color(0xFFBBBBBB)
-                                                : Color(0xFF6CC2A8),
-                                        width: selectedDate == null ? 1.0 : 1.5,
+                                                ? const Color(0xFFBBBBBB)
+                                                : const Color(0xFF6CC2A8),
+                                        width: selectedDate == null ? 1.2 : 1.8,
                                       ),
                                     ),
                                     child: Text(
                                       selectedDate == null
                                           ? ''
                                           : DateFormat.yMMMMd().format(
-                                              selectedDate!,
-                                            ),
+                                            selectedDate!,
+                                          ),
                                       style: TextStyle(
                                         color:
                                             selectedDate == null
@@ -345,7 +267,6 @@ void showAddAppointmentDialog(BuildContext context, {required Function onAppoint
                                                 : Colors.black,
                                         fontSize: 14,
                                       ),
-                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ),
@@ -359,7 +280,7 @@ void showAddAppointmentDialog(BuildContext context, {required Function onAppoint
                               children: [
                                 const Text(
                                   "Time",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontWeight: FontWeight.w600),
                                 ),
                                 const SizedBox(height: 8),
                                 GestureDetector(
@@ -376,18 +297,19 @@ void showAddAppointmentDialog(BuildContext context, {required Function onAppoint
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
-                                      vertical: 10,
                                     ),
+                                    height: 48, // Fixed height for consistency
+                                    alignment: Alignment.centerLeft,
                                     width: double.infinity,
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color:
                                             selectedTime == null
-                                                ? Color(0xFFBBBBBB)
-                                                : Color(0xFF6CC2A8),
-                                        width: selectedTime == null ? 1.0 : 1.5,
+                                                ? const Color(0xFFBBBBBB)
+                                                : const Color(0xFF6CC2A8),
+                                        width: selectedTime == null ? 1.2 : 1.8,
                                       ),
                                     ),
                                     child: Text(
@@ -401,7 +323,6 @@ void showAddAppointmentDialog(BuildContext context, {required Function onAppoint
                                                 : Colors.black,
                                         fontSize: 14,
                                       ),
-                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ),
@@ -454,74 +375,99 @@ void showAddAppointmentDialog(BuildContext context, {required Function onAppoint
               ),
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6CC2A8),
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () async {
-                  if (vaccineController.text.isEmpty ||
-                      hospitalController.text.isEmpty ||
-                      doseController.text.isEmpty ||
-                      totalDoseController.text.isEmpty ||
-                      selectedDate == null ||
-                      selectedTime == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Please fill in all required fields."),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                    return;
-                  }
-
-                  final appointmentDateTime = DateTime(
-                    selectedDate!.year,
-                    selectedDate!.month,
-                    selectedDate!.day,
-                    selectedTime!.hour,
-                    selectedTime!.minute,
-                  );
-
-                  final data = {
-                    'vaccineName': vaccineController.text,
-                    'location': hospitalController.text,
-                    'dose': int.tryParse(doseController.text),
-                    'totalDose': int.tryParse(totalDoseController.text),
-                    'date': appointmentDateTime.toIso8601String(),
-                    'description': detailController.text,
-                  };
-                  final String? uid = await getUserId();
-                  final response = await http.post(
-                    Uri.parse('${dotenv.env['API_URL']}/appointment?uid=$uid'),
-                    headers: {'Content-Type': 'application/json'},
-                    body: jsonEncode(data),
-                  );
-                  if (response.statusCode == 200) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Appointment added successfully!"),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    Navigator.of(context).pop();
-                    onAppointmentAdded(); // Call the callback here
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "Failed to add appointment: ${response.body}",
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.green),
                         ),
-                        backgroundColor: Colors.redAccent,
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.green),
+                        ),
                       ),
-                    );
-                  }
-                },
-                child: const Text('Submit'),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6CC2A8),
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          if (vaccineController.text.isEmpty ||
+                              hospitalController.text.isEmpty ||
+                              doseController.text.isEmpty ||
+                              totalDoseController.text.isEmpty ||
+                              selectedDate == null ||
+                              selectedTime == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Please fill in all required fields.",
+                                ),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                            return;
+                          }
+                
+                          final appointmentDateTime = DateTime(
+                            selectedDate!.year,
+                            selectedDate!.month,
+                            selectedDate!.day,
+                            selectedTime!.hour,
+                            selectedTime!.minute,
+                          );
+                
+                          final data = {
+                            'vaccineName': vaccineController.text,
+                            'location': hospitalController.text,
+                            'dose': int.tryParse(doseController.text),
+                            'totalDose': int.tryParse(totalDoseController.text),
+                            'date': appointmentDateTime.toIso8601String(),
+                            'description': detailController.text,
+                          };
+                
+                          final String? uid = await getUserId();
+                          final response = await http.post(
+                            Uri.parse(
+                              '${dotenv.env['API_URL']}/appointment?uid=$uid',
+                            ),
+                            headers: {'Content-Type': 'application/json'},
+                            body: jsonEncode(data),
+                          );
+                
+                          if (response.statusCode == 200) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Appointment added successfully!"),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            Navigator.of(context).pop();
+                            onAppointmentAdded(); // Call the callback here
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Failed to add appointment: ${response.body}",
+                                ),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
+                        },
+                        child: const Text('Submit'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           );
