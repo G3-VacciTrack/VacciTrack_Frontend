@@ -13,41 +13,96 @@ class EducationDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text("Vaccines for " + data['title'])),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
+        padding: const EdgeInsets.symmetric(vertical: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (data['cover'] != null)
-              Image.asset(
-                'assets/images/${data['cover']}.png',
-                width: double.infinity,
-                height: 250,
-                fit: BoxFit.cover,
-              ),
-            SizedBox(height: 16),
-            Text(data['description'] ?? '', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 24),
-
-            ...sections
-                .map((section) => CustomVaccineAccordion(section: section))
-                .toList(),
-
-            SizedBox(height: 32),
-            if (reference != null && reference.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 24),
+              child: Row(
                 children: [
-                  Divider(),
-                  SizedBox(height: 10),
-                  Text(
-                    'Reference',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  IconButton(
+                    icon: Icon(Icons.chevron_left_rounded, color: Color(0xFF33354C), size: 40),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
-                  Text(reference, style: TextStyle(color: Colors.black)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      data['title'] ?? 'Details',
+                      style: const TextStyle(
+                        color: Color(0xFF33354C),
+                        fontSize: 24,
+                        fontFamily: 'Noto Sans Bengali',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            SizedBox(height: 30),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: Image.asset(
+                'assets/images/${data['cover'] ?? 'placeholder'}.png',
+                width: 290,
+                height: 222,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 51),
+              child: Text(
+                data['description'] ?? '',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 12,
+                  fontFamily: 'Noto Sans Bengali',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 51),
+              child: Column(
+                children: sections.map((section) => CustomVaccineAccordion(section: section)).toList(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            if (reference != null && reference.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 51),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Reference',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                        fontFamily: 'Noto Sans Bengali',
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      reference,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                        fontFamily: 'Noto Sans Bengali',
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
