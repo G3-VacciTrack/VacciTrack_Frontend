@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   String name = "";
   String errorMessage = '';
-  int currentPage = 0; // 0 = หน้าแรก, 1 = HistoryPage, 2 = AppointmentPage
+  int currentPage = 0;
   static final String baseUrl =
       dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
 
@@ -247,7 +247,7 @@ class _HomePageState extends State<HomePage> {
               'Recommended Vaccines by Age',
               style: TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w700,
                 color: Color(0xFF33354C),
               ),
             ),
