@@ -159,7 +159,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
                             vaccineName: appt.vaccineName,
                             hospital: appt.location,
                             date: formatDate(appt.date),
-                            description: appt.description ?? '',
+                            description: appt.description,
                             dose: appt.dose,
                           ),
                         );

@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../components/custom_bottom_navigation.dart';
 
 import 'history_page.dart';
 import 'appointment_page.dart';
 import 'user_info_page.dart';
-import 'signin_page.dart';
 import 'home_page.dart';
 
 class MainPage extends StatefulWidget {

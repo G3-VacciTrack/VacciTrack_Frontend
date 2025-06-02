@@ -12,7 +12,7 @@ class EducationDetailPage extends StatelessWidget {
     final String? reference = data['Reference'];
 
     return Scaffold(
-      appBar: AppBar(title: Text("Vaccines for " + data['title'] ?? 'Detail')),
+      appBar: AppBar(title: Text("Vaccines for " + data['title'])),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(

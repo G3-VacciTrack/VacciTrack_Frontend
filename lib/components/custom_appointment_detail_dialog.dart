@@ -29,7 +29,7 @@ void showAppointmentDetailsDialog(
         text: appointment.dose.toString(),
       );
       final totalDoseController = TextEditingController(
-        text: appointment.totalDose?.toString() ?? '',
+        text: appointment.totalDose.toString(),
       );
       final diseaseController = TextEditingController(
         text: appointment.diseaseName,
@@ -41,7 +41,7 @@ void showAppointmentDetailsDialog(
 
       final String originalVaccineName = appointment.vaccineName;
       final String originalHospital = appointment.location;
-      final String originalDescription = appointment.description ?? '';
+      final String originalDescription = appointment.description;
       final int originalDose = appointment.dose;
       final int? originalTotalDose = appointment.totalDose;
       final DateTime? originalSelectedDate = DateTime.tryParse(
