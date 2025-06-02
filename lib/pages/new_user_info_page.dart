@@ -19,6 +19,8 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
   String gender = 'Male';
   String responseMessage = '';
   DateTime? dob;
+  bool agreedToPrivacyPolicy = false;
+  bool isSubmitting = false;
 
   static final String baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
 
@@ -28,21 +30,15 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
   }
 
   Future<void> _submit() async {
-    final form = _formKey.currentState;
+    if (!_formKey.currentState!.validate() || dob == null || !agreedToPrivacyPolicy) return;
+
+    setState(() => isSubmitting = true);
+
+    _formKey.currentState!.save();
+    final uid = await getUserId();
     final fcm = FirebaseMessaging.instance;
     final token = await fcm.getToken();
 
-    if (form == null || !form.validate()) return;
-
-    if (dob == null) {
-      setState(() {
-        responseMessage = 'Please select your date of birth.';
-      });
-      return;
-    }
-
-    form.save();
-    final uid = await getUserId();
     final url = Uri.parse('$baseUrl/user/info?uid=$uid');
     final Map<String, dynamic> requestBody = {
       'firstName': firstName,
@@ -65,14 +61,12 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
           MaterialPageRoute(builder: (context) => MainPage()),
         );
       } else {
-        setState(() {
-          responseMessage = 'Failed (${response.statusCode}): ${response.body}';
-        });
+        setState(() => responseMessage = 'Failed (${response.statusCode}): ${response.body}');
       }
     } catch (e) {
-      setState(() {
-        responseMessage = 'Error sending request: $e';
-      });
+      setState(() => responseMessage = 'Error sending request: $e');
+    } finally {
+      setState(() => isSubmitting = false);
     }
   }
 
@@ -83,12 +77,18 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-
-    if (picked != null && picked != dob) {
+    if (picked != null) {
       setState(() {
         dob = picked;
       });
     }
+  }
+
+  bool get isFormReady {
+    return _formKey.currentState?.validate() == true &&
+        dob != null &&
+        agreedToPrivacyPolicy &&
+        !isSubmitting;
   }
 
   @override
@@ -114,31 +114,44 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
               const SizedBox(height: 60),
               Form(
                 key: _formKey,
+                onChanged: () => setState(() {}),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabeledTextField('First Name', onSaved: (val) => firstName = val!, validator: (val) => val != null && val.isNotEmpty ? null : 'Enter first name'),
+                    _buildLabeledTextField(
+                      'First Name',
+                      onSaved: (val) => firstName = val!,
+                      validator: (val) => val != null && val.isNotEmpty ? null : 'Enter first name',
+                    ),
                     const SizedBox(height: 24),
-                    _buildLabeledTextField('Last Name', onSaved: (val) => lastName = val!, validator: (val) => val != null && val.isNotEmpty ? null : 'Enter last name'),
+                    _buildLabeledTextField(
+                      'Last Name',
+                      onSaved: (val) => lastName = val!,
+                      validator: (val) => val != null && val.isNotEmpty ? null : 'Enter last name',
+                    ),
                     const SizedBox(height: 24),
                     Row(
                       children: [
                         Expanded(child: _buildDOBField(context)),
                         SizedBox(width: 16),
-                        Expanded(child: _buildGenderDropdown())
+                        Expanded(child: _buildGenderDropdown()),
                       ],
                     ),
                     const SizedBox(height: 32),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 21,
-                          height: 21,
-                          decoration: BoxDecoration(
+                        Checkbox(
+                          value: agreedToPrivacyPolicy,
+                          onChanged: (bool? newValue) {
+                            setState(() {
+                              agreedToPrivacyPolicy = newValue ?? false;
+                            });
+                          },
+                          shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Color(0xFFBBBBBB)),
                           ),
+                          side: const BorderSide(color: Color(0xFFBBBBBB)),
                         ),
                         const SizedBox(width: 13),
                         Expanded(
@@ -146,7 +159,7 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
                               Text(
-                                'Policy, PDPA ',
+                                'Privacy Policy & PDPA ',
                                 style: TextStyle(
                                   color: Color(0xFF33354C),
                                   fontSize: 15,
@@ -156,7 +169,7 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
                               ),
                               SizedBox(height: 6),
                               Text(
-                                'Ipsum is simply dummy text of the printing and typesetting industry.',
+                                'Your personal data will be used solely for recording vaccination history and sending reminders about upcoming or overdue vaccinations, in line with our privacy policy and PDPA regulations.',
                                 style: TextStyle(
                                   color: Color(0xFF6F6F6F),
                                   fontSize: 11,
@@ -170,7 +183,7 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
                       ],
                     ),
                     const SizedBox(height: 32),
-                    loadingButton(),
+                    _buildSubmitButton(),
                     if (responseMessage.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 20),
@@ -189,7 +202,11 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
     );
   }
 
-  Widget _buildLabeledTextField(String label, {required FormFieldSetter<String> onSaved, required FormFieldValidator<String> validator}) {
+  Widget _buildLabeledTextField(
+    String label, {
+    required FormFieldSetter<String> onSaved,
+    required FormFieldValidator<String> validator,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -215,14 +232,16 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: Color(0xFFBBBBBB), width: 1.5),
             ),
-            
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: Color(0xFFBBBBBB)),
             ),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         ),
       ],
@@ -236,7 +255,7 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Age',
+            'Date of Birth',
             style: TextStyle(
               color: Color(0xFF33354C),
               fontSize: 15.93,
@@ -313,26 +332,32 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
     );
   }
 
-  Widget loadingButton() {
+  Widget _buildSubmitButton() {
     return GestureDetector(
-      onTap: _submit,
+      onTap: isFormReady ? _submit : null,
       child: Container(
         height: 44,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: const Color(0xFF6CC2A8),
+          color: isFormReady ? const Color(0xFF6CC2A8) : Colors.grey[400],
           borderRadius: BorderRadius.circular(22),
         ),
         alignment: Alignment.center,
-        child: const Text(
-          'Submit',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontFamily: 'Noto Sans Bengali',
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: isSubmitting
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              )
+            : const Text(
+                'Submit',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontFamily: 'Noto Sans Bengali',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }
