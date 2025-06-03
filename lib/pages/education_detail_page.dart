@@ -18,7 +18,7 @@ class EducationDetailPage extends StatelessWidget {
           icon: const Icon(
             Icons.chevron_left_rounded,
             color: Color(0xFF33354C),
-            size: 40,
+            size: 35,
           ),
           onPressed: () {
             Navigator.of(context).pop();
@@ -29,10 +29,10 @@ class EducationDetailPage extends StatelessWidget {
           style: const TextStyle(
             color: Color(0xFF33354C),
             fontSize: 24,
-            fontFamily: 'Noto Sans Bengali',
             fontWeight: FontWeight.w700,
           ),
         ),
+        titleSpacing: 0.0,
       ),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -42,7 +42,7 @@ class EducationDetailPage extends StatelessWidget {
             Image.asset(
               'assets/images/${data['cover'] ?? 'placeholder'}.png',
               width: double.infinity,
-              height: 250,
+              height: 300,
               fit: BoxFit.cover,
             ),
             const SizedBox(height: 20),
@@ -50,10 +50,7 @@ class EducationDetailPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Text(
                 data['description'] ?? '',
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Color(0xFF33354C), fontSize: 14),
               ),
             ),
             const SizedBox(height: 24),
@@ -71,18 +68,21 @@ class EducationDetailPage extends StatelessWidget {
             const SizedBox(height: 20),
             if (reference != null && reference.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 51),
+                padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Divider(),
+                    const Divider(
+                      color: Color(0xFF33354C),
+                      thickness: 0.5,
+                      height: 20,
+                    ),
                     const SizedBox(height: 8),
                     const Text(
                       'Reference',
                       style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 12,
-                        fontFamily: 'Noto Sans Bengali',
+                        color: Color(0xFF33354C),
+                        fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -90,10 +90,8 @@ class EducationDetailPage extends StatelessWidget {
                     Text(
                       reference,
                       style: const TextStyle(
-                        color: Colors.black,
+                        color: Color(0xFF33354C),
                         fontSize: 12,
-                        fontFamily: 'Noto Sans Bengali',
-                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],

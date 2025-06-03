@@ -33,7 +33,7 @@ class _SignUpPageState extends State<SignUpPage> {
     final result = await _authService.registerWithEmail(email, password);
 
     if (result == null) {
-      Navigator.of(context).pop(); // Success
+      Navigator.of(context).pop();
     } else {
       setState(() => error = result);
     }
@@ -56,7 +56,6 @@ class _SignUpPageState extends State<SignUpPage> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 94),
           child: Stack(
             children: [
-              // Back Button
               Positioned(
                 left: 0,
                 top: 0,
@@ -65,8 +64,6 @@ class _SignUpPageState extends State<SignUpPage> {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
-
-              // Header Text
               const Positioned(
                 left: 50,
                 top: 0,
@@ -75,7 +72,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   style: TextStyle(
                     color: Color(0xFF33354C),
                     fontSize: 32,
-                    fontFamily: 'Noto Sans Bengali',
+
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -191,7 +188,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
-                                  fontFamily: 'Noto Sans Bengali',
+
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -206,7 +203,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             style: TextStyle(
                               color: Color(0xFF6F6F6F),
                               fontSize: 13,
-                              fontFamily: 'Noto Sans Bengali',
+
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -217,7 +214,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               style: TextStyle(
                                 color: Color(0xFF6CC2A8),
                                 fontSize: 13,
-                                fontFamily: 'Noto Sans Bengali',
+
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -243,8 +240,8 @@ class _SignUpPageState extends State<SignUpPage> {
           label,
           style: const TextStyle(
             color: Color(0xFF33354C),
-            fontSize: 15.93,
-            fontFamily: 'Noto Sans Bengali',
+            fontSize: 16,
+
             fontWeight: FontWeight.w700,
           ),
         ),

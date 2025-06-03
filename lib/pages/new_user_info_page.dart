@@ -22,7 +22,8 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
   bool agreedToPrivacyPolicy = false;
   bool isSubmitting = false;
 
-  static final String baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
+  static final String baseUrl =
+      dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
 
   Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
@@ -30,7 +31,10 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || dob == null || !agreedToPrivacyPolicy) return;
+    if (!_formKey.currentState!.validate() ||
+        dob == null ||
+        !agreedToPrivacyPolicy)
+      return;
 
     setState(() => isSubmitting = true);
 
@@ -61,7 +65,11 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
           MaterialPageRoute(builder: (context) => MainPage()),
         );
       } else {
-        setState(() => responseMessage = 'Failed (${response.statusCode}): ${response.body}');
+        setState(
+          () =>
+              responseMessage =
+                  'Failed (${response.statusCode}): ${response.body}',
+        );
       }
     } catch (e) {
       setState(() => responseMessage = 'Error sending request: $e');
@@ -107,7 +115,7 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
                 style: TextStyle(
                   color: Color(0xFF33354C),
                   fontSize: 32,
-                  fontFamily: 'Noto Sans Bengali',
+
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -121,13 +129,21 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
                     _buildLabeledTextField(
                       'First Name',
                       onSaved: (val) => firstName = val!,
-                      validator: (val) => val != null && val.isNotEmpty ? null : 'Enter first name',
+                      validator:
+                          (val) =>
+                              val != null && val.isNotEmpty
+                                  ? null
+                                  : 'Enter first name',
                     ),
                     const SizedBox(height: 24),
                     _buildLabeledTextField(
                       'Last Name',
                       onSaved: (val) => lastName = val!,
-                      validator: (val) => val != null && val.isNotEmpty ? null : 'Enter last name',
+                      validator:
+                          (val) =>
+                              val != null && val.isNotEmpty
+                                  ? null
+                                  : 'Enter last name',
                     ),
                     const SizedBox(height: 24),
                     Row(
@@ -163,7 +179,6 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
                                 style: TextStyle(
                                   color: Color(0xFF33354C),
                                   fontSize: 15,
-                                  fontFamily: 'Noto Sans Bengali',
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -173,7 +188,6 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
                                 style: TextStyle(
                                   color: Color(0xFF6F6F6F),
                                   fontSize: 11,
-                                  fontFamily: 'Noto Sans Bengali',
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -214,8 +228,7 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
           label,
           style: const TextStyle(
             color: Color(0xFF33354C),
-            fontSize: 15.93,
-            fontFamily: 'Noto Sans Bengali',
+            fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -258,8 +271,7 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
             'Date of Birth',
             style: TextStyle(
               color: Color(0xFF33354C),
-              fontSize: 15.93,
-              fontFamily: 'Noto Sans Bengali',
+              fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -276,9 +288,11 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
               alignment: Alignment.centerLeft,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                dob != null ? "${dob!.day}/${dob!.month}/${dob!.year}" : 'Select Date',
+                dob != null
+                    ? "${dob!.day}/${dob!.month}/${dob!.year}"
+                    : 'Select Date',
                 style: TextStyle(
-                  color: dob != null ? Colors.black : Colors.grey,
+                  color: dob != null ? Color(0xFF33354C) : Colors.grey,
                 ),
               ),
             ),
@@ -298,17 +312,17 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
             'Gender',
             style: TextStyle(
               color: Color(0xFF33354C),
-              fontSize: 15.93,
-              fontFamily: 'Noto Sans Bengali',
+              fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: gender,
-            items: ['Male', 'Female']
-                .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                .toList(),
+            items:
+                ['Male', 'Female']
+                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                    .toList(),
             onChanged: (val) => setState(() => gender = val ?? gender),
             onSaved: (val) => gender = val ?? gender,
             decoration: InputDecoration(
@@ -343,21 +357,25 @@ class _NewUserInfoPageState extends State<NewUserInfoPage> {
           borderRadius: BorderRadius.circular(22),
         ),
         alignment: Alignment.center,
-        child: isSubmitting
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-              )
-            : const Text(
-                'Submit',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontFamily: 'Noto Sans Bengali',
-                  fontWeight: FontWeight.w600,
+        child:
+            isSubmitting
+                ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+                : const Text(
+                  'Submit',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
       ),
     );
   }

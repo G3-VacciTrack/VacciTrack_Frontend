@@ -113,7 +113,6 @@ class _SignInPageState extends State<SignInPage> {
                     style: TextStyle(
                       color: const Color(0xFF33354C),
                       fontSize: 32,
-                      fontFamily: 'Noto Sans Bengali',
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -132,8 +131,7 @@ class _SignInPageState extends State<SignInPage> {
                           'Email',
                           style: TextStyle(
                             color: const Color(0xFF33354C),
-                            fontSize: 15.93,
-                            fontFamily: 'Noto Sans Bengali',
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -161,10 +159,9 @@ class _SignInPageState extends State<SignInPage> {
                           'Password',
                           style: TextStyle(
                             color: const Color(0xFF33354C),
-                            fontSize: 15.93,
-                            fontFamily: 'Noto Sans Bengali',
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
-                          ),
+                          )
                         ),
                         SizedBox(height: 8),
                         TextFormField(
@@ -223,7 +220,6 @@ class _SignInPageState extends State<SignInPage> {
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
-                                  fontFamily: 'Noto Sans Bengali',
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -280,7 +276,6 @@ class _SignInPageState extends State<SignInPage> {
                                 style: TextStyle(
                                   color: const Color(0xFF6CC2A8),
                                   fontSize: 14,
-                                  fontFamily: 'Noto Sans Bengali',
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -298,7 +293,6 @@ class _SignInPageState extends State<SignInPage> {
                               style: TextStyle(
                                 color: const Color(0xFF6F6F6F),
                                 fontSize: 13,
-                                fontFamily: 'Noto Sans Bengali',
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -315,7 +309,6 @@ class _SignInPageState extends State<SignInPage> {
                                 style: TextStyle(
                                   color: const Color(0xFF6CC2A8),
                                   fontSize: 13,
-                                  fontFamily: 'Noto Sans Bengali',
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

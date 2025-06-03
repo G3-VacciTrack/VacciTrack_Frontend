@@ -7,15 +7,17 @@ class VaccineHistoryCard extends StatelessWidget {
   final int dose;
   final int totalDose;
   final String description;
+  final String diseaseName;
 
   const VaccineHistoryCard({
     super.key,
     required this.historyId,
+    required this.diseaseName,
     required this.vaccineName,
     required this.hospital,
     required this.dose,
     required this.totalDose,
-    required this.description
+    required this.description,
   });
 
   @override
@@ -27,7 +29,7 @@ class VaccineHistoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Color(0xFF33354C).withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -45,9 +47,28 @@ class VaccineHistoryCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    vaccineName.isNotEmpty ? vaccineName : 'Unknown Vaccine',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  Row(
+                    children: [
+                      Text(
+                        vaccineName.isNotEmpty
+                            ? vaccineName
+                            : 'Unknown Vaccine',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 3),
+                      Container(
+                        width: 160,
+                        child: Text(
+                          diseaseName.isNotEmpty ? ': $diseaseName' : '',
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -73,9 +94,6 @@ class VaccineHistoryCard extends StatelessWidget {
             ),
           ],
         ),
-        onTap: () {
-          // Optional: Navigate to detail
-        },
       ),
     );
   }

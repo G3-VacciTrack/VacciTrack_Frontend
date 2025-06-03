@@ -5,7 +5,10 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vaccitrack_frontend/pages/appointment_page.dart';
 import 'package:vaccitrack_frontend/pages/history_page.dart';
+import 'package:intl/intl.dart';
 
+import '../models/appointment_record.dart';
+import '../components/custom_vaccine_appointment_card.dart';
 import './education_detail_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -17,7 +20,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? educationData;
+  List<AppointmentRecord> upcomingAppointments = [];
   bool isLoading = true;
+  bool isLoadingAppointments = true;
   String name = "";
   String errorMessage = '';
   int currentPage = 0;
@@ -34,6 +39,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     fetchUserName();
     fetchEducationData();
+    fetchUpcomingAppointments();
   }
 
   Future<void> fetchEducationData() async {
@@ -51,6 +57,68 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       debugPrint("Error fetching education data: $e");
       setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> fetchUpcomingAppointments() async {
+    setState(() {
+      isLoadingAppointments = true;
+    });
+    try {
+      final uid = await getUserId();
+      if (uid == null) {
+        setState(() {
+          errorMessage = 'User not logged in.';
+          isLoadingAppointments = false;
+        });
+        return;
+      }
+      final url = Uri.parse('$baseUrl/appointment/upcoming?uid=$uid');
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        if (jsonResponse['appointment'] != null &&
+            jsonResponse['appointment'] is List) {
+          setState(() {
+            upcomingAppointments =
+                (jsonResponse['appointment'] as List)
+                    .map((item) => AppointmentRecord.fromJson(item))
+                    .toList();
+            upcomingAppointments.sort((a, b) {
+              DateTime dateA = DateTime.parse(a.date);
+              DateTime dateB = DateTime.parse(b.date);
+              return dateA.compareTo(dateB);
+            });
+            errorMessage = '';
+          });
+        } else {
+          setState(() {
+            upcomingAppointments = [];
+            errorMessage = 'No upcoming appointments found.';
+          });
+        }
+      } else {
+        setState(() {
+          upcomingAppointments = [];
+          errorMessage =
+              'Failed to load upcoming appointments: ${response.statusCode}';
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching upcoming appointments: $e");
+      setState(() {
+        errorMessage =
+            'Failed to connect to server or no upcoming appointments.';
+        upcomingAppointments = [];
+      });
+    } finally {
+      setState(() {
+        isLoadingAppointments = false;
+      });
     }
   }
 
@@ -77,13 +145,34 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  String formatDate(String dateTimeString) {
+    try {
+      if (dateTimeString.contains('_seconds') &&
+          dateTimeString.contains('_nanoseconds')) {
+        final Map<String, dynamic> dateMap = json.decode(dateTimeString);
+        final int seconds = dateMap['_seconds'];
+        final int nanoseconds = dateMap['_nanoseconds'];
+        final dt = DateTime.fromMillisecondsSinceEpoch(
+          seconds * 1000 + nanoseconds ~/ 1000000,
+        );
+        return DateFormat('d MMM y').format(dt);
+      } else {
+        final dt = DateTime.parse(dateTimeString);
+        return DateFormat('d MMM y').format(dt);
+      }
+    } catch (e) {
+      debugPrint("Error parsing date: $e for string: $dateTimeString");
+      return dateTimeString;
+    }
+  }
+
   Widget renderPageContent() {
-    if (isLoading) {
+    if (isLoading || isLoadingAppointments) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (educationData == null || educationData!['education'] is! List) {
-      return const Center(child: Text('No data available'));
+      return const Center(child: Text('No education data available'));
     }
 
     final List educations = educationData!['education'] as List;
@@ -97,6 +186,80 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 9),
+          const Text(
+            'Upcoming Vaccine',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF33354C),
+            ),
+          ),
+          const SizedBox(height: 9),
+          if (upcomingAppointments.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.event_busy,
+                      size: 60,
+                      color: const Color.fromARGB(255, 186, 235, 221),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      errorMessage.isNotEmpty
+                          ? errorMessage
+                          : 'No upcoming appointments scheduled.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(
+                      height: 24,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Column(
+              children:
+                  upcomingAppointments.map((appt) {
+                    return GestureDetector(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: VaccineAppointmentCard(
+                          appointmentId: appt.id,
+                          diseaseName: appt.diseaseName,
+                          vaccineName: appt.vaccineName,
+                          hospital: appt.location,
+                          date: formatDate(appt.date),
+                          description: appt.description,
+                          dose: appt.dose,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AppointmentPage(),
+                          ),
+                        );
+                      },
+                    );
+                  }).toList(),
+            ),
+          const SizedBox(height: 12),
+          const Text(
+            'Manage Your Vaccines',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF33354C),
+            ),
+          ),
+          const SizedBox(height: 9),
           Align(
             alignment: Alignment.center,
             child: Container(
@@ -108,7 +271,7 @@ class _HomePageState extends State<HomePage> {
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: const Color(0xFF33354C).withOpacity(0.1),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -180,7 +343,7 @@ class _HomePageState extends State<HomePage> {
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: const Color(0xFF33354C).withOpacity(0.1),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -280,7 +443,7 @@ class _HomePageState extends State<HomePage> {
                           borderRadius: BorderRadius.circular(40),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: const Color(0xFF33354C).withOpacity(0.1),
                               offset: const Offset(0, 0),
                               blurRadius: 10,
                               spreadRadius: 1,
@@ -299,7 +462,7 @@ class _HomePageState extends State<HomePage> {
                                   Image.asset(
                                     'assets/images/${item['cover']}.png',
                                     width: double.infinity,
-                                    height: 100,
+                                    height: 110,
                                     fit: BoxFit.cover,
                                   ),
                                 const SizedBox(height: 12),
@@ -307,8 +470,8 @@ class _HomePageState extends State<HomePage> {
                                   item['title'] ?? '',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
