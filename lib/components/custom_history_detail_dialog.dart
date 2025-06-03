@@ -4,60 +4,58 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../models/appointment_record.dart';
+import '../models/history_record.dart';
 
-void showAppointmentDetailsDialog(
+void showHistoryDetailsDialog(
   BuildContext context, {
-  required AppointmentRecord appointment,
-  required Function onAppointmentUpdated,
+  required HistoryRecord history,
+  required Function onHistoryUpdated,
 }) {
   showDialog(
     context: context,
     builder: (context) {
-      bool _isEditing = false;
+      bool _isEditing = false; // This is fine as it's modified by setState
 
       final vaccineController = TextEditingController(
-        text: appointment.vaccineName,
+        text: history.vaccineName,
       );
-      final hospitalController = TextEditingController(
-        text: appointment.location,
-      );
-      final detailController = TextEditingController(
-        text: appointment.description,
-      );
+      final hospitalController = TextEditingController(text: history.location);
+      final detailController = TextEditingController(text: history.description);
       final doseController = TextEditingController(
-        text: appointment.dose.toString(),
+        text: history.dose.toString(),
       );
       final totalDoseController = TextEditingController(
-        text: appointment.totalDose.toString(),
+        text: history.totalDose.toString(),
       );
       final diseaseController = TextEditingController(
-        text: appointment.diseaseName,
+        text: history.diseaseName,
       );
 
-      DateTime? selectedDate = DateTime.tryParse(appointment.date);
-      TimeOfDay? selectedTime =
-          selectedDate != null ? TimeOfDay.fromDateTime(selectedDate) : null;
+      // Moved these into the StatefulBuilder's builder scope
+      // so they can be managed by its setState
+      DateTime? _selectedDate = DateTime.tryParse(history.date);
+      TimeOfDay? _selectedTime =
+          _selectedDate != null ? TimeOfDay.fromDateTime(_selectedDate) : null;
 
-      final String originalVaccineName = appointment.vaccineName;
-      final String originalHospital = appointment.location;
-      final String originalDescription = appointment.description;
-      final int originalDose = appointment.dose;
-      final int? originalTotalDose = appointment.totalDose;
-      final DateTime? originalSelectedDate = DateTime.tryParse(
-        appointment.date,
-      );
+      final String originalVaccineName = history.vaccineName;
+      final String originalHospital = history.location;
+      final String originalDescription = history.description;
+      final int originalDose = history.dose;
+      final int? originalTotalDose = history.totalDose;
+      final DateTime? originalSelectedDate = DateTime.tryParse(history.date);
       final TimeOfDay? originalSelectedTime =
           originalSelectedDate != null
               ? TimeOfDay.fromDateTime(originalSelectedDate)
               : null;
-      final String originalDiseaseName = appointment.diseaseName;
+      final String originalDiseaseName = history.diseaseName;
 
       Future<String?> getUserId() async {
         final prefs = await SharedPreferences.getInstance();
         return prefs.getString('user_id');
       }
 
+      // Helper functions remain outside StatefulBuilder for clarity
+      // but they will use the _selectedDate and _selectedTime from StatefulBuilder's scope
       String _formatDateForDisplay(DateTime? date) {
         return date == null ? '' : DateFormat.yMMMMd().format(date);
       }
@@ -66,7 +64,7 @@ void showAppointmentDetailsDialog(
         return time == null ? '' : time.format(context);
       }
 
-      String appointmentId = appointment.id;
+      String historyId = history.id;
 
       List<String> _diseases = [];
       bool _isLoadingDiseases = true;
@@ -74,6 +72,9 @@ void showAppointmentDetailsDialog(
 
       return StatefulBuilder(
         builder: (context, setState) {
+          // Now _selectedDate and _selectedTime are within the scope
+          // where setState can rebuild them.
+
           Future<void> _fetchDiseases() async {
             setState(() {
               _isLoadingDiseases = true;
@@ -123,7 +124,7 @@ void showAppointmentDetailsDialog(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Appointment Details',
+                  'History Details',
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
                 if (!_isEditing)
@@ -133,6 +134,11 @@ void showAppointmentDetailsDialog(
                       setState(() {
                         _isEditing = true;
                         _fetchDiseases();
+                        // Reset to original values when entering edit mode,
+                        // or keep current values if preferred.
+                        // Here, we re-initialize to original values to allow canceling
+                        _selectedDate = originalSelectedDate;
+                        _selectedTime = originalSelectedTime;
                       });
                     },
                   ),
@@ -187,22 +193,23 @@ void showAppointmentDetailsDialog(
                           child: _buildDateTimeRow(
                             context,
                             label: 'Date',
-                            displayValue: _formatDateForDisplay(selectedDate),
+                            displayValue: _formatDateForDisplay(_selectedDate),
                             isEditing: _isEditing,
                             onTap: () async {
+                              print("Date field tapped!"); // Debug print
                               final picked = await showDatePicker(
                                 context: context,
-                                initialDate: selectedDate ?? DateTime.now(),
+                                initialDate: _selectedDate ?? DateTime.now(),
                                 firstDate: DateTime.now(),
                                 lastDate: DateTime(2100),
                               );
                               if (picked != null) {
-                                setState(() => selectedDate = picked);
+                                setState(() => _selectedDate = picked);
                               }
                             },
                             isDate: true,
-                            selectedDate: selectedDate,
-                            selectedTime: selectedTime,
+                            selectedDate: _selectedDate,
+                            selectedTime: _selectedTime,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -210,20 +217,21 @@ void showAppointmentDetailsDialog(
                           child: _buildDateTimeRow(
                             context,
                             label: 'Time',
-                            displayValue: _formatTimeForDisplay(selectedTime),
+                            displayValue: _formatTimeForDisplay(_selectedTime),
                             isEditing: _isEditing,
                             onTap: () async {
+                              print("Time field tapped!"); // Debug print
                               final picked = await showTimePicker(
                                 context: context,
-                                initialTime: selectedTime ?? TimeOfDay.now(),
+                                initialTime: _selectedTime ?? TimeOfDay.now(),
                               );
                               if (picked != null) {
-                                setState(() => selectedTime = picked);
+                                setState(() => _selectedTime = picked);
                               }
                             },
                             isDate: false,
-                            selectedDate: selectedDate,
-                            selectedTime: selectedTime,
+                            selectedDate: _selectedDate,
+                            selectedTime: _selectedTime,
                           ),
                         ),
                       ],
@@ -257,8 +265,9 @@ void showAppointmentDetailsDialog(
                             doseController.text = originalDose.toString();
                             totalDoseController.text =
                                 originalTotalDose?.toString() ?? '';
-                            selectedDate = originalSelectedDate;
-                            selectedTime = originalSelectedTime;
+                            // Revert to original values on cancel
+                            _selectedDate = originalSelectedDate;
+                            _selectedTime = originalSelectedTime;
                             diseaseController.text = originalDiseaseName;
                           });
                         },
@@ -280,8 +289,8 @@ void showAppointmentDetailsDialog(
                               hospitalController.text.isEmpty ||
                               doseController.text.isEmpty ||
                               totalDoseController.text.isEmpty ||
-                              selectedDate == null ||
-                              selectedTime == null ||
+                              _selectedDate == null || // Use _selectedDate
+                              _selectedTime == null || // Use _selectedTime
                               diseaseController.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -294,12 +303,12 @@ void showAppointmentDetailsDialog(
                             return;
                           }
 
-                          final updatedAppointmentDateTime = DateTime(
-                            selectedDate!.year,
-                            selectedDate!.month,
-                            selectedDate!.day,
-                            selectedTime!.hour,
-                            selectedTime!.minute,
+                          final updatedHistoryDateTime = DateTime(
+                            _selectedDate!.year, // Use _selectedDate
+                            _selectedDate!.month,
+                            _selectedDate!.day,
+                            _selectedTime!.hour, // Use _selectedTime
+                            _selectedTime!.minute,
                           );
 
                           final updatedData = {
@@ -307,8 +316,7 @@ void showAppointmentDetailsDialog(
                             'location': hospitalController.text,
                             'dose': int.tryParse(doseController.text),
                             'totalDose': int.tryParse(totalDoseController.text),
-                            'date':
-                                updatedAppointmentDateTime.toIso8601String(),
+                            'date': updatedHistoryDateTime.toIso8601String(),
                             'description': detailController.text,
                             'diseaseName': diseaseController.text,
                           };
@@ -327,7 +335,7 @@ void showAppointmentDetailsDialog(
                           try {
                             final response = await http.put(
                               Uri.parse(
-                                '${dotenv.env['API_URL']}/appointment/${appointment.id}?uid=$uid',
+                                '${dotenv.env['API_URL']}/history/${history.id}?uid=$uid',
                               ),
                               headers: {'Content-Type': 'application/json'},
                               body: jsonEncode(updatedData),
@@ -337,29 +345,29 @@ void showAppointmentDetailsDialog(
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
-                                    "Appointment updated successfully!",
+                                    "History updated successfully!",
                                   ),
                                   backgroundColor: Color(0xFF6CC2A8),
                                 ),
                               );
                               Navigator.of(context).pop();
-                              onAppointmentUpdated();
+                              onHistoryUpdated();
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    "Failed to update appointment: ${response.body}",
+                                    "Failed to update history: ${response.body}",
                                   ),
                                   backgroundColor: Colors.redAccent,
                                 ),
                               );
                             }
                           } catch (e) {
-                            print("Error updating appointment: $e");
+                            print("Error updating history: $e");
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                  "An error occurred while updating appointment.",
+                                  "An error occurred while updating history.",
                                 ),
                                 backgroundColor: Colors.redAccent,
                                 behavior: SnackBarBehavior.floating,
@@ -401,7 +409,7 @@ void showAppointmentDetailsDialog(
                             builder: (BuildContext context) {
                               return AlertDialog(
                                 title: const Text(
-                                  'Are you sure you want to delete your Appointment?',
+                                  'Are you sure you want to delete your History?',
                                   style: TextStyle(fontSize: 18),
                                 ),
                                 actions: <Widget>[
@@ -453,7 +461,7 @@ void showAppointmentDetailsDialog(
                                             try {
                                               final response = await http.delete(
                                                 Uri.parse(
-                                                  '${dotenv.env['API_URL']}/appointment/$appointmentId?uid=$uid',
+                                                  '${dotenv.env['API_URL']}/history/$historyId?uid=$uid',
                                                 ),
                                                 headers: {
                                                   'Content-Type':
@@ -467,7 +475,7 @@ void showAppointmentDetailsDialog(
                                                 ).showSnackBar(
                                                   const SnackBar(
                                                     content: Text(
-                                                      "Appointment deleted successfully!",
+                                                      "History deleted successfully!",
                                                     ),
                                                     backgroundColor: Color(
                                                       0xFF6CC2A8,
@@ -475,14 +483,14 @@ void showAppointmentDetailsDialog(
                                                   ),
                                                 );
                                                 Navigator.of(context).pop();
-                                                onAppointmentUpdated();
+                                                onHistoryUpdated();
                                               } else {
                                                 ScaffoldMessenger.of(
                                                   context,
                                                 ).showSnackBar(
                                                   SnackBar(
                                                     content: Text(
-                                                      "Failed to delete appointment: ${response.body}",
+                                                      "Failed to delete history: ${response.body}",
                                                     ),
                                                     backgroundColor:
                                                         Colors.redAccent,
@@ -491,14 +499,14 @@ void showAppointmentDetailsDialog(
                                               }
                                             } catch (e) {
                                               print(
-                                                "Error deleting appointment: $e",
+                                                "Error deleting history: $e",
                                               );
                                               ScaffoldMessenger.of(
                                                 context,
                                               ).showSnackBar(
                                                 const SnackBar(
                                                   content: Text(
-                                                    "An error occurred while deleting appointment.",
+                                                    "An error occurred while deleting history.",
                                                   ),
                                                   backgroundColor:
                                                       Colors.redAccent,
@@ -534,6 +542,8 @@ void showAppointmentDetailsDialog(
     },
   );
 }
+
+// Keep _buildDetailRow and _buildDiseaseDetailRow as they are.
 
 Widget _buildDetailRow(
   String label,
@@ -753,7 +763,7 @@ Widget _buildDateTimeRow(
   required bool isEditing,
   required VoidCallback onTap,
   required bool isDate,
-  DateTime? selectedDate,
+  DateTime? selectedDate, // These are now passed for display, not for state
   TimeOfDay? selectedTime,
 }) {
   return Padding(
@@ -774,16 +784,9 @@ Widget _buildDateTimeRow(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color:
-                    isEditing
-                        ? const Color(0xFF6CC2A8)
-                        : (isDate
-                            ? (selectedDate == null
-                                ? const Color(0xFFBBBBBB)
-                                : const Color(0xFFBBBBBB))
-                            : (selectedTime == null
-                                ? const Color(0xFFBBBBBB)
-                                : const Color(0xFFBBBBBB))),
+                color: isEditing
+                    ? const Color(0xFF6CC2A8)
+                    : const Color(0xFFBBBBBB),
                 width: isEditing ? 1.8 : 1.2,
               ),
             ),
@@ -793,7 +796,7 @@ Widget _buildDateTimeRow(
                   : displayValue,
               style: TextStyle(
                 color:
-                    displayValue.isEmpty ? Colors.grey[600] : Color(0xFF33354C),
+                    displayValue.isEmpty ? Colors.grey[600] : const Color(0xFF33354C),
                 fontSize: 14,
               ),
             ),

@@ -73,7 +73,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
           label,
           style: const TextStyle(
             color: Color(0xFF33354C),
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -81,7 +81,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
           value,
           style: const TextStyle(
             color: Color(0xFF6F6F6F),
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -98,7 +98,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Color(0xFF33354C).withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -175,7 +175,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
                             ),
                             const Spacer(),
                             IconButton(
-                              icon: const Icon(Icons.logout),
+                              icon: const Icon(Icons.logout, size: 28),
                               tooltip: 'Sign Out',
                               onPressed: () => _signOut(context),
                             ),
@@ -191,11 +191,14 @@ class _UserInfoPageState extends State<UserInfoPage> {
                                   'Name',
                                   '${user['fistName'] ?? ''} ${user['lastName'] ?? ''}',
                                 ),
+                                const SizedBox(height: 8),
                                 buildProfileRow(
                                   'Age',
                                   user['age']?.toString() ?? '-',
                                 ),
+                                const SizedBox(height: 8),
                                 buildProfileRow('Birthday', user['dob'] ?? '-'),
+                                const SizedBox(height: 8),
                                 buildProfileRow(
                                   'Gender',
                                   user['gender'] ?? '-',
@@ -243,9 +246,46 @@ class _UserInfoPageState extends State<UserInfoPage> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        buildFamilyCard('Chawisa', '21'),
-                        buildFamilyCard('Chawisa', '21'),
-                        buildFamilyCard('Chawisa', '21'),
+                        buildFamilyCard('Dummy1', '21'),
+                        buildFamilyCard('Dummy2', '21'),
+                        buildFamilyCard('Dummy3', '21'),
+                        const SizedBox(
+                          height: 30,
+                        ),
+                        const Text(
+                          'Vaccitrack Support',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF33354C),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Need assistance? Reach out to our support team for help.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6F6F6F),
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            buildProfileRow('Email', 'support@vaccitrack.com'),
+                            const SizedBox(height: 8),
+                            buildProfileRow('Phone', '+1 (123) 456-7890'),
+                            const SizedBox(height: 8),
+                            buildProfileRow('Website', 'www.vaccitrack.com'),
+                            const SizedBox(height: 8),
+                            buildProfileRow(
+                              'Location',
+                              '123 Vaccine St, Health City, Global',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),

@@ -5,9 +5,9 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void showAddAppointmentDialog(
+void showHistoryDetailsDialog(
   BuildContext context, {
-  required Function onAppointmentAdded,
+  required Function onHistoryAdded,
 }) {
   final vaccineController = TextEditingController();
   final hospitalController = TextEditingController();
@@ -77,7 +77,7 @@ void showAddAppointmentDialog(
           return AlertDialog(
             backgroundColor: Colors.white,
             title: const Text(
-              'Add Appointment',
+              'History Details',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             content: SizedBox(
@@ -585,7 +585,7 @@ void showAddAppointmentDialog(
                             return;
                           }
 
-                          final appointmentDateTime = DateTime(
+                          final historyDateTime = DateTime(
                             selectedDate!.year,
                             selectedDate!.month,
                             selectedDate!.day,
@@ -598,7 +598,7 @@ void showAddAppointmentDialog(
                             'location': hospitalController.text,
                             'dose': int.tryParse(doseController.text),
                             'totalDose': int.tryParse(totalDoseController.text),
-                            'date': appointmentDateTime.toIso8601String(),
+                            'date': historyDateTime.toIso8601String(),
                             'description': detailController.text,
                             'diseaseName': diseaseController.text,
                           };
@@ -606,7 +606,7 @@ void showAddAppointmentDialog(
                           final String? uid = await getUserId();
                           final response = await http.post(
                             Uri.parse(
-                              '${dotenv.env['API_URL']}/appointment?uid=$uid',
+                              '${dotenv.env['API_URL']}/history?uid=$uid',
                             ),
                             headers: {'Content-Type': 'application/json'},
                             body: jsonEncode(data),
@@ -615,19 +615,17 @@ void showAddAppointmentDialog(
                           if (response.statusCode == 200) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
-                                  "Appointment added successfully!",
-                                ),
+                                content: Text("History added successfully!"),
                                 backgroundColor: Color(0xFF6CC2A8),
                               ),
                             );
                             Navigator.of(context).pop();
-                            onAppointmentAdded();
+                            onHistoryAdded();
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  "Failed to add appointment: ${response.body}",
+                                  "Failed to add history: ${response.body}",
                                 ),
                                 backgroundColor: Colors.redAccent,
                               ),

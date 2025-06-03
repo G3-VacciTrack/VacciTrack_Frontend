@@ -6,8 +6,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../models/appointment_record.dart';
 import '../components/custom_vaccine_appointment_card.dart';
-import '../components/custom_create_appointment_dialog.dart'; 
-import '../components/custom_appointment_detail_dialog.dart'; 
+import '../components/custom_create_appointment_dialog.dart';
+import '../components/custom_appointment_detail_dialog.dart';
 import 'package:intl/intl.dart';
 
 class AppointmentPage extends StatefulWidget {
@@ -23,11 +23,26 @@ class _AppointmentPageState extends State<AppointmentPage> {
 
   String errorMessage = '';
   late Future<List<AppointmentRecord>> futureAppointments;
+  List<AppointmentRecord> allAppointments = [];
+  final TextEditingController _searchController =
+      TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _fetchAppointments();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+    });
   }
 
   Future<void> _fetchAppointments() async {
@@ -61,15 +76,19 @@ class _AppointmentPageState extends State<AppointmentPage> {
         final jsonResponse = json.decode(response.body);
         if (jsonResponse['appointment'] != null &&
             jsonResponse['appointment'] is List) {
+          final fetchedAppointments =
+              (jsonResponse['appointment'] as List)
+                  .map((item) => AppointmentRecord.fromJson(item))
+                  .toList();
           setState(() {
+            allAppointments = fetchedAppointments;
             errorMessage = '';
           });
-          return (jsonResponse['appointment'] as List)
-              .map((item) => AppointmentRecord.fromJson(item))
-              .toList();
+          return fetchedAppointments;
         } else {
           setState(() {
             errorMessage = 'No Appointment found.';
+            allAppointments = [];
           });
           return [];
         }
@@ -97,6 +116,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool canPop = Navigator.of(context).canPop();
     return Scaffold(
       body: SafeArea(
         top: false,
@@ -105,16 +125,70 @@ class _AppointmentPageState extends State<AppointmentPage> {
           child: CustomScrollView(
             slivers: [
               SliverAppBar(
+                leading:
+                    canPop
+                        ? IconButton(
+                          icon: const Icon(
+                            Icons.chevron_left_rounded,
+                            color: Color(0xFF33354C),
+                            size: 35,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        )
+                        : null,
                 title: const Text(
                   'Appointment',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
                 ),
                 backgroundColor: Colors.white,
                 elevation: 0,
-                scrolledUnderElevation: 0.0,
-                surfaceTintColor: Colors.transparent,
                 pinned: true,
-                floating: false,
+                titleSpacing: canPop ? 0.0 : null,
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF33354C).withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search appointment',
+                        hintStyle: const TextStyle(
+                          color: Color(0xFF6F6F6F),
+                          fontSize: 14,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF6CC2A8),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 0,
+                          horizontal: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
               SliverFillRemaining(
                 child: FutureBuilder<List<AppointmentRecord>>(
@@ -126,46 +200,84 @@ class _AppointmentPageState extends State<AppointmentPage> {
                       return Center(
                         child: Text('Error: ${snapshot.error}\n$errorMessage'),
                       );
-                    } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-                      return Center(
-                        child: Text(
-                          errorMessage.isNotEmpty
-                              ? errorMessage
-                              : 'No upcoming appointments.',
-                        ),
-                      );
                     } else if (snapshot.hasData) {
-                      final appointments = snapshot.data!;
-                      appointments.sort(
+                      List<AppointmentRecord> displayedAppointments = snapshot.data!;
+                      final searchQuery = _searchController.text.toLowerCase();
+                      if (searchQuery.isNotEmpty) {
+                        displayedAppointments =
+                            displayedAppointments.where((record) {
+                              return record.vaccineName.toLowerCase().contains(
+                                searchQuery,
+                              );
+                            }).toList();
+                      }
+                      if (displayedAppointments.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.sentiment_dissatisfied,
+                                size: 80,
+                                color: const Color.fromARGB(255, 186, 235, 221),
+                              ),
+                              const SizedBox(
+                                height: 16,
+                              ),
+                              Text(
+                                errorMessage.isNotEmpty
+                                    ? errorMessage
+                                    : 'No upcoming appointments found.',
+                                textAlign:
+                                    TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      displayedAppointments.sort(
                         (a, b) => DateTime.parse(
                           a.date,
                         ).compareTo(DateTime.parse(b.date)),
                       );
-                      return ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 100),
-                        itemCount: appointments.length,
-                        itemBuilder: (context, index) {
-                          final appt = appointments[index];
-                          return GestureDetector(
-                            onTap: () {
-                              showAppointmentDetailsDialog(
-                                context,
-                                appointment: appt,
-                                onAppointmentUpdated: () {
-                                  _fetchAppointments(); 
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        child: ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 100),
+                          itemCount: displayedAppointments.length,
+                          itemBuilder: (context, index) {
+                            final appt = displayedAppointments[index];
+                            return Padding(
+                              padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+                              child: GestureDetector(
+                                onTap: () {
+                                  showAppointmentDetailsDialog(
+                                    context,
+                                    appointment: appt,
+                                    onAppointmentUpdated: () {
+                                      _fetchAppointments();
+                                    },
+                                  );
                                 },
-                              );
-                            },
-                            child: VaccineAppointmentCard(
-                              appointmentId: appt.id,
-                              vaccineName: appt.vaccineName,
-                              hospital: appt.location,
-                              date: formatDate(appt.date),
-                              description: appt.description,
-                              dose: appt.dose,
-                            ),
-                          );
-                        },
+                                child: VaccineAppointmentCard(
+                                  appointmentId: appt.id,
+                                  diseaseName: appt.diseaseName,
+                                  vaccineName: appt.vaccineName,
+                                  hospital: appt.location,
+                                  date: formatDate(appt.date),
+                                  description: appt.description,
+                                  dose: appt.dose,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       );
                     } else {
                       return const Center(child: Text('No data available.'));
@@ -179,16 +291,19 @@ class _AppointmentPageState extends State<AppointmentPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          showAddAppointmentDialog(context, onAppointmentAdded: () {
-            _fetchAppointments();
-          });
+          showAddAppointmentDialog(
+            context,
+            onAppointmentAdded: () {
+              _fetchAppointments();
+            },
+          );
         },
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
           "Add Appointment",
           style: TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
         ),
