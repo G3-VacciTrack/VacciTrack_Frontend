@@ -7,6 +7,8 @@ class AppointmentRecord {
   final int dose;
   final int totalDose;
   final String diseaseName;
+  final String memberId;
+  final String memberName;
 
   AppointmentRecord({
     required this.vaccineName,
@@ -16,7 +18,9 @@ class AppointmentRecord {
     required this.id,
     required this.dose,
     required this.totalDose,
-    required this.diseaseName
+    required this.diseaseName,
+    required this.memberId,
+    required this.memberName,
   });
 
   factory AppointmentRecord.fromJson(Map<String, dynamic> json) {
@@ -33,6 +37,8 @@ class AppointmentRecord {
 
     return AppointmentRecord(
       id: json['id'] ?? '',
+      memberId: json['memberId'] ?? '',
+      memberName: json['memberName'] ?? '',
       date: parsedDate.toIso8601String(),
       description: json['description'] ?? '',
       vaccineName: json['vaccineName'] ?? '',

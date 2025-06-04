@@ -14,7 +14,7 @@ void showHistoryDetailsDialog(
   showDialog(
     context: context,
     builder: (context) {
-      bool _isEditing = false; // This is fine as it's modified by setState
+      bool _isEditing = false;
 
       final vaccineController = TextEditingController(
         text: history.vaccineName,
@@ -30,9 +30,8 @@ void showHistoryDetailsDialog(
       final diseaseController = TextEditingController(
         text: history.diseaseName,
       );
+      final memberController = TextEditingController(text: history.memberName);
 
-      // Moved these into the StatefulBuilder's builder scope
-      // so they can be managed by its setState
       DateTime? _selectedDate = DateTime.tryParse(history.date);
       TimeOfDay? _selectedTime =
           _selectedDate != null ? TimeOfDay.fromDateTime(_selectedDate) : null;
@@ -48,14 +47,14 @@ void showHistoryDetailsDialog(
               ? TimeOfDay.fromDateTime(originalSelectedDate)
               : null;
       final String originalDiseaseName = history.diseaseName;
+      final String originalMemberName = history.memberName;
+      final String? originalMemberId = history.memberId;
 
       Future<String?> getUserId() async {
         final prefs = await SharedPreferences.getInstance();
         return prefs.getString('user_id');
       }
 
-      // Helper functions remain outside StatefulBuilder for clarity
-      // but they will use the _selectedDate and _selectedTime from StatefulBuilder's scope
       String _formatDateForDisplay(DateTime? date) {
         return date == null ? '' : DateFormat.yMMMMd().format(date);
       }
@@ -70,11 +69,13 @@ void showHistoryDetailsDialog(
       bool _isLoadingDiseases = true;
       String? _diseaseError;
 
+      List<Map<String, String>> _familyMembers = [];
+      bool _isLoadingFamilyMembers = true;
+      String? _familyMemberError;
+      String? _selectedFamilyMemberId;
+
       return StatefulBuilder(
         builder: (context, setState) {
-          // Now _selectedDate and _selectedTime are within the scope
-          // where setState can rebuild them.
-
           Future<void> _fetchDiseases() async {
             setState(() {
               _isLoadingDiseases = true;
@@ -110,11 +111,80 @@ void showHistoryDetailsDialog(
             }
           }
 
-          if (_isEditing &&
-              _isLoadingDiseases &&
-              _diseases.isEmpty &&
-              _diseaseError == null) {
-            _fetchDiseases();
+          Future<void> _fetchFamilyMembers() async {
+            setState(() {
+              _isLoadingFamilyMembers = true;
+              _familyMemberError = null;
+            });
+            try {
+              final String? uid = await getUserId();
+              if (uid == null) {
+                _familyMemberError = "User not logged in.";
+                setState(() => _isLoadingFamilyMembers = false);
+                return;
+              }
+
+              final response = await http.get(
+                Uri.parse('${dotenv.env['API_URL']}/family/names?uid=$uid'),
+                headers: {'Content-Type': 'application/json'},
+              );
+
+              if (response.statusCode == 200) {
+                final Map<String, dynamic> responseData = jsonDecode(
+                  response.body,
+                );
+                final List<dynamic> membersList =
+                    responseData['members'] as List<dynamic>;
+
+                _familyMembers =
+                    membersList
+                        .map(
+                          (item) => {
+                            '_id': item['id'].toString(),
+                            'name': item['fullName'].toString(),
+                          },
+                        )
+                        .toList();
+
+                if (originalMemberId != null &&
+                    _familyMembers.any((m) => m['_id'] == originalMemberId)) {
+                  _selectedFamilyMemberId = originalMemberId;
+                } else if (_familyMembers.isNotEmpty) {
+                  final matchedMember = _familyMembers.firstWhere(
+                    (m) => m['name'] == originalMemberName,
+                    orElse: () => _familyMembers.first,
+                  );
+                  _selectedFamilyMemberId = matchedMember['_id'];
+                }
+              } else {
+                _familyMemberError =
+                    'Failed to load family members: ${response.statusCode}';
+                print(
+                  "Error fetching family members: ${response.statusCode} - ${response.body}",
+                );
+              }
+            } catch (e) {
+              _familyMemberError =
+                  'Failed to connect to server to load family members.';
+              print("Exception fetching family members: $e");
+            } finally {
+              setState(() {
+                _isLoadingFamilyMembers = false;
+              });
+            }
+          }
+
+          if (_isEditing) {
+            if (_isLoadingDiseases &&
+                _diseases.isEmpty &&
+                _diseaseError == null) {
+              _fetchDiseases();
+            }
+            if (_isLoadingFamilyMembers &&
+                _familyMembers.isEmpty &&
+                _familyMemberError == null) {
+              _fetchFamilyMembers();
+            }
           }
 
           return AlertDialog(
@@ -123,9 +193,9 @@ void showHistoryDetailsDialog(
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'History Details',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                Text(
+                  _isEditing ? 'Edit History' : 'History Details',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 if (!_isEditing)
                   IconButton(
@@ -134,11 +204,12 @@ void showHistoryDetailsDialog(
                       setState(() {
                         _isEditing = true;
                         _fetchDiseases();
-                        // Reset to original values when entering edit mode,
-                        // or keep current values if preferred.
-                        // Here, we re-initialize to original values to allow canceling
+                        _fetchFamilyMembers();
+
                         _selectedDate = originalSelectedDate;
                         _selectedTime = originalSelectedTime;
+                        _selectedFamilyMemberId = originalMemberId;
+                        memberController.text = originalMemberName;
                       });
                     },
                   ),
@@ -164,6 +235,32 @@ void showHistoryDetailsDialog(
                       _diseases,
                       _isLoadingDiseases,
                       _diseaseError,
+                    ),
+
+                    _buildFamilyMemberDropdown(
+                      context,
+                      'Family Member',
+                      _isEditing,
+                      _familyMembers,
+                      _isLoadingFamilyMembers,
+                      _familyMemberError,
+                      _selectedFamilyMemberId,
+                      (String? newValue) {
+                        setState(() {
+                          _selectedFamilyMemberId = newValue;
+
+                          if (newValue != null) {
+                            memberController.text =
+                                _familyMembers.firstWhere(
+                                  (m) => m['_id'] == newValue,
+                                )['name'] ??
+                                '';
+                          } else {
+                            memberController.text = '';
+                          }
+                        });
+                      },
+                      memberController.text,
                     ),
                     _buildDetailRow('Hospital', hospitalController, _isEditing),
                     Row(
@@ -196,7 +293,7 @@ void showHistoryDetailsDialog(
                             displayValue: _formatDateForDisplay(_selectedDate),
                             isEditing: _isEditing,
                             onTap: () async {
-                              print("Date field tapped!"); // Debug print
+                              print("Date field tapped!");
                               final picked = await showDatePicker(
                                 context: context,
                                 initialDate: _selectedDate ?? DateTime.now(),
@@ -220,7 +317,7 @@ void showHistoryDetailsDialog(
                             displayValue: _formatTimeForDisplay(_selectedTime),
                             isEditing: _isEditing,
                             onTap: () async {
-                              print("Time field tapped!"); // Debug print
+                              print("Time field tapped!");
                               final picked = await showTimePicker(
                                 context: context,
                                 initialTime: _selectedTime ?? TimeOfDay.now(),
@@ -265,10 +362,11 @@ void showHistoryDetailsDialog(
                             doseController.text = originalDose.toString();
                             totalDoseController.text =
                                 originalTotalDose?.toString() ?? '';
-                            // Revert to original values on cancel
                             _selectedDate = originalSelectedDate;
                             _selectedTime = originalSelectedTime;
                             diseaseController.text = originalDiseaseName;
+                            memberController.text = originalMemberName;
+                            _selectedFamilyMemberId = originalMemberId;
                           });
                         },
                         child: const Text(
@@ -289,9 +387,10 @@ void showHistoryDetailsDialog(
                               hospitalController.text.isEmpty ||
                               doseController.text.isEmpty ||
                               totalDoseController.text.isEmpty ||
-                              _selectedDate == null || // Use _selectedDate
-                              _selectedTime == null || // Use _selectedTime
-                              diseaseController.text.isEmpty) {
+                              _selectedDate == null ||
+                              _selectedTime == null ||
+                              diseaseController.text.isEmpty ||
+                              _selectedFamilyMemberId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -304,10 +403,10 @@ void showHistoryDetailsDialog(
                           }
 
                           final updatedHistoryDateTime = DateTime(
-                            _selectedDate!.year, // Use _selectedDate
+                            _selectedDate!.year,
                             _selectedDate!.month,
                             _selectedDate!.day,
-                            _selectedTime!.hour, // Use _selectedTime
+                            _selectedTime!.hour,
                             _selectedTime!.minute,
                           );
 
@@ -319,6 +418,8 @@ void showHistoryDetailsDialog(
                             'date': updatedHistoryDateTime.toIso8601String(),
                             'description': detailController.text,
                             'diseaseName': diseaseController.text,
+                            'memberId': _selectedFamilyMemberId,
+                            'memberName': memberController.text,
                           };
 
                           final String? uid = await getUserId();
@@ -492,8 +593,6 @@ void showHistoryDetailsDialog(
                                                     content: Text(
                                                       "Failed to delete history: ${response.body}",
                                                     ),
-                                                    backgroundColor:
-                                                        Colors.redAccent,
                                                   ),
                                                 );
                                               }
@@ -510,6 +609,8 @@ void showHistoryDetailsDialog(
                                                   ),
                                                   backgroundColor:
                                                       Colors.redAccent,
+                                                  behavior:
+                                                      SnackBarBehavior.floating,
                                                 ),
                                               );
                                             }
@@ -542,8 +643,6 @@ void showHistoryDetailsDialog(
     },
   );
 }
-
-// Keep _buildDetailRow and _buildDiseaseDetailRow as they are.
 
 Widget _buildDetailRow(
   String label,
@@ -745,8 +844,111 @@ Widget _buildDiseaseDetailRow(
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(
+                  color: Color(0xFF6CC2A8),
+                  width: 1.8,
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+Widget _buildFamilyMemberDropdown(
+  BuildContext context,
+  String label,
+  bool isEditing,
+  List<Map<String, String>> familyMembers,
+  bool isLoadingFamilyMembers,
+  String? familyMemberError,
+  String? selectedValue,
+  ValueChanged<String?> onChanged,
+  String displayValue,
+) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 0.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        if (isEditing)
+          isLoadingFamilyMembers
+              ? const Center(child: CircularProgressIndicator())
+              : familyMemberError != null
+              ? Text(
+                familyMemberError,
+                style: const TextStyle(color: Colors.red),
+              )
+              : Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFF6CC2A8),
+                    width: 1.8,
+                  ),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    value: selectedValue,
+                    hint: const Text('Select a family member'),
+                    icon: const Icon(
+                      Icons.arrow_drop_down,
+                      color: Color(0xFF6CC2A8),
+                    ),
+                    items:
+                        familyMembers.map<DropdownMenuItem<String>>((
+                          Map<String, String> member,
+                        ) {
+                          return DropdownMenuItem<String>(
+                            value: member['_id'],
+                            child: Text(
+                              member['name'] ?? '',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: onChanged,
+                  ),
+                ),
+              )
+        else
+          TextField(
+            controller: TextEditingController(text: displayValue),
+            readOnly: true,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
                   color: Color(0xFFBBBBBB),
                   width: 1.2,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: Color(0xFFBBBBBB),
+                  width: 1.2,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: Color(0xFF6CC2A8),
+                  width: 1.8,
                 ),
               ),
             ),
@@ -763,7 +965,7 @@ Widget _buildDateTimeRow(
   required bool isEditing,
   required VoidCallback onTap,
   required bool isDate,
-  DateTime? selectedDate, // These are now passed for display, not for state
+  DateTime? selectedDate,
   TimeOfDay? selectedTime,
 }) {
   return Padding(
@@ -775,29 +977,51 @@ Widget _buildDateTimeRow(
         const SizedBox(height: 8),
         GestureDetector(
           onTap: isEditing ? onTap : null,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            height: 48,
-            alignment: Alignment.centerLeft,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isEditing
-                    ? const Color(0xFF6CC2A8)
-                    : const Color(0xFFBBBBBB),
-                width: isEditing ? 1.8 : 1.2,
-              ),
-            ),
-            child: Text(
-              displayValue.isEmpty
-                  ? (isEditing ? 'Tap to select' : 'N/A')
-                  : displayValue,
-              style: TextStyle(
-                color:
-                    displayValue.isEmpty ? Colors.grey[600] : const Color(0xFF33354C),
-                fontSize: 14,
+          child: AbsorbPointer(
+            absorbing: !isEditing,
+            child: TextField(
+              readOnly: true,
+              controller: TextEditingController(text: displayValue),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color:
+                        isEditing
+                            ? const Color(0xFF6CC2A8)
+                            : const Color(0xFFBBBBBB),
+                    width: isEditing ? 1.8 : 1.2,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color:
+                        isEditing
+                            ? const Color(0xFF6CC2A8)
+                            : const Color(0xFFBBBBBB),
+                    width: isEditing ? 1.8 : 1.2,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF6CC2A8),
+                    width: 1.8,
+                  ),
+                ),
+                suffixIcon:
+                    isEditing
+                        ? Icon(
+                          isDate ? Icons.calendar_today : Icons.access_time,
+                        )
+                        : null,
               ),
             ),
           ),

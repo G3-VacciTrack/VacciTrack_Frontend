@@ -8,6 +8,7 @@ class VaccineAppointmentCard extends StatelessWidget {
   final String hospital;
   final int dose;
   final String diseaseName;
+  final String memberName;
 
   const VaccineAppointmentCard({
     super.key,
@@ -18,6 +19,7 @@ class VaccineAppointmentCard extends StatelessWidget {
     required this.vaccineName,
     required this.hospital,
     required this.dose,
+    required this.memberName,
   });
 
   @override
@@ -69,6 +71,8 @@ class VaccineAppointmentCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  Text('$memberName', style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 4),
                   Text(
                     hospital.isNotEmpty ? hospital : 'Unknown Hospital',

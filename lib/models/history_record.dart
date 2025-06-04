@@ -7,8 +7,11 @@ class HistoryRecord {
   final int totalDose;
   final String description;
   final String diseaseName;
+  final String memberName;
+  final String memberId;
 
   HistoryRecord({
+    required this.memberName,
     required this.id,
     required this.date,
     required this.dose,
@@ -17,10 +20,13 @@ class HistoryRecord {
     required this.totalDose,
     required this.description,
     required this.diseaseName,
+    required this.memberId
   });
 
   factory HistoryRecord.fromJson(Map<String, dynamic> json) {
     return HistoryRecord(
+      memberId: json['memberId'] ?? '',
+      memberName: json['memberName'] ?? '',
       id: json['id'] ?? '',
       date: json['date'] ?? '',
       dose: json['dose'],

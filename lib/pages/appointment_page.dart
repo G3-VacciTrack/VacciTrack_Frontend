@@ -266,6 +266,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
                                   );
                                 },
                                 child: VaccineAppointmentCard(
+                                  memberName: appt.memberName,
                                   appointmentId: appt.id,
                                   diseaseName: appt.diseaseName,
                                   vaccineName: appt.vaccineName,
