@@ -14,8 +14,8 @@ void showAddAppointmentDialog(
   final doseController = TextEditingController();
   final detailController = TextEditingController();
   final totalDoseController = TextEditingController();
-
   final diseaseController = TextEditingController();
+  final memberController = TextEditingController();
 
   Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
@@ -28,6 +28,11 @@ void showAddAppointmentDialog(
   List<String> _diseases = [];
   bool _isLoadingDiseases = true;
   String? _diseaseError;
+
+  List<Map<String, String>> _familyMembers = [];
+  bool _isLoadingFamilyMembers = true;
+  String? _familyMemberError;
+  String? _selectedFamilyMemberId;
 
   showDialog(
     context: context,
@@ -69,11 +74,74 @@ void showAddAppointmentDialog(
             }
           }
 
+          Future<void> _fetchFamilyMembers() async {
+            setState(() {
+              _isLoadingFamilyMembers = true;
+              _familyMemberError = null;
+            });
+            try {
+              final String? uid = await getUserId();
+              if (uid == null) {
+                _familyMemberError = "User not logged in.";
+                setState(() => _isLoadingFamilyMembers = false);
+                return;
+              }
+
+              final response = await http.get(
+                Uri.parse('${dotenv.env['API_URL']}/family/names?uid=$uid'),
+                headers: {'Content-Type': 'application/json'},
+              );
+
+              if (response.statusCode == 200) {
+                final Map<String, dynamic> responseData = jsonDecode(
+                  response.body,
+                );
+                final List<dynamic> membersList =
+                    responseData['members'] as List<dynamic>;
+
+                _familyMembers =
+                    membersList
+                        .map(
+                          (item) => {
+                            '_id': item['id'].toString(),
+                            'name': item['fullName'].toString(),
+                          },
+                        )
+                        .toList();
+
+                if (_familyMembers.isNotEmpty) {
+                  _selectedFamilyMemberId = _familyMembers.first['_id'];
+                  memberController.text = _familyMembers.first['name'] ?? '';
+                }
+              } else {
+                _familyMemberError =
+                    'Failed to load family members: ${response.statusCode}';
+                print(
+                  "Error fetching family members: ${response.statusCode} - ${response.body}",
+                );
+              }
+            } catch (e) {
+              _familyMemberError =
+                  'Failed to connect to server to load family members.';
+              print("Exception fetching family members: $e");
+            } finally {
+              setState(() {
+                _isLoadingFamilyMembers = false;
+              });
+            }
+          }
+
           if (_isLoadingDiseases &&
               _diseases.isEmpty &&
               _diseaseError == null) {
             _fetchDiseases();
           }
+          if (_isLoadingFamilyMembers &&
+              _familyMembers.isEmpty &&
+              _familyMemberError == null) {
+            _fetchFamilyMembers();
+          }
+
           return AlertDialog(
             backgroundColor: Colors.white,
             title: const Text(
@@ -141,119 +209,192 @@ void showAddAppointmentDialog(
                           _isLoadingDiseases
                               ? const Center(child: CircularProgressIndicator())
                               : _diseaseError != null
-                                  ? Text(
-                                      _diseaseError!,
-                                      style: const TextStyle(color: Colors.red),
-                                    )
-                                  : Autocomplete<String>(
-                                      optionsBuilder: (
-                                        TextEditingValue textEditingValue,
-                                      ) {
-                                        if (textEditingValue.text.isEmpty) {
-                                          return _diseases;
-                                        }
-                                        return _diseases.where((String option) {
-                                          return option.toLowerCase().contains(
-                                            textEditingValue.text.toLowerCase(),
-                                          );
-                                        });
-                                      },
-                                      fieldViewBuilder: (
-                                        BuildContext context,
-                                        TextEditingController
-                                            textEditingController,
-                                        FocusNode focusNode,
-                                        VoidCallback onFieldSubmitted,
-                                      ) {
-                                        diseaseController.text =
-                                            textEditingController.text;
-                                        return TextField(
-                                          controller: textEditingController,
-                                          focusNode: focusNode,
-                                          onSubmitted: (String value) {
-                                            onFieldSubmitted();
-                                            diseaseController.text = value;
-                                          },
-                                          decoration: InputDecoration(
-                                            filled: true,
-                                            fillColor: Colors.white,
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 10,
-                                            ),
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                color: Color(0xFFBBBBBB),
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                color: Color(0xFFBBBBBB),
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                color: Color(0xFF6CC2A8),
-                                                width: 1.8,
-                                              ),
-                                            ),
+                              ? Text(
+                                _diseaseError!,
+                                style: const TextStyle(color: Colors.red),
+                              )
+                              : Autocomplete<String>(
+                                optionsBuilder: (
+                                  TextEditingValue textEditingValue,
+                                ) {
+                                  if (textEditingValue.text.isEmpty) {
+                                    return _diseases;
+                                  }
+                                  return _diseases.where((String option) {
+                                    return option.toLowerCase().contains(
+                                      textEditingValue.text.toLowerCase(),
+                                    );
+                                  });
+                                },
+                                fieldViewBuilder: (
+                                  BuildContext context,
+                                  TextEditingController textEditingController,
+                                  FocusNode focusNode,
+                                  VoidCallback onFieldSubmitted,
+                                ) {
+                                  diseaseController.text =
+                                      textEditingController.text;
+                                  return TextField(
+                                    controller: textEditingController,
+                                    focusNode: focusNode,
+                                    onSubmitted: (String value) {
+                                      onFieldSubmitted();
+                                      diseaseController.text = value;
+                                    },
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 10,
                                           ),
-                                        );
-                                      },
-                                      onSelected: (String selection) {
-                                        diseaseController.text = selection;
-                                        FocusScope.of(context).unfocus();
-                                      },
-                                      optionsViewBuilder: (
-                                        BuildContext context,
-                                        AutocompleteOnSelected<String>
-                                            onSelected,
-                                        Iterable<String> options,
-                                      ) {
-                                        return Align(
-                                          alignment: Alignment.topLeft,
-                                          child: Material(
-                                            elevation: 4.0,
-                                            child: SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.66,
-                                              height: 300,
-                                              child: ListView.builder(
-                                                padding:
-                                                    const EdgeInsets.all(8.0),
-                                                itemCount: options.length,
-                                                itemBuilder: (
-                                                  BuildContext context,
-                                                  int index,
-                                                ) {
-                                                  final String option = options
-                                                      .elementAt(index);
-                                                  return GestureDetector(
-                                                    onTap: () {
-                                                      onSelected(option);
-                                                    },
-                                                    child: ListTile(
-                                                      title: Text(option),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFBBBBBB),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFBBBBBB),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFF6CC2A8),
+                                          width: 1.8,
+                                        ),
+                                      ),
                                     ),
+                                  );
+                                },
+                                onSelected: (String selection) {
+                                  diseaseController.text = selection;
+                                  FocusScope.of(context).unfocus();
+                                },
+                                optionsViewBuilder: (
+                                  BuildContext context,
+                                  AutocompleteOnSelected<String> onSelected,
+                                  Iterable<String> options,
+                                ) {
+                                  return Align(
+                                    alignment: Alignment.topLeft,
+                                    child: Material(
+                                      elevation: 4.0,
+                                      child: SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                            0.66,
+                                        height: 300,
+                                        child: ListView.builder(
+                                          padding: const EdgeInsets.all(8.0),
+                                          itemCount: options.length,
+                                          itemBuilder: (
+                                            BuildContext context,
+                                            int index,
+                                          ) {
+                                            final String option = options
+                                                .elementAt(index);
+                                            return GestureDetector(
+                                              onTap: () {
+                                                onSelected(option);
+                                              },
+                                              child: ListTile(
+                                                title: Text(option),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Family Member',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          _isLoadingFamilyMembers
+                              ? const Center(child: CircularProgressIndicator())
+                              : _familyMemberError != null
+                              ? Text(
+                                _familyMemberError!,
+                                style: const TextStyle(color: Colors.red),
+                              )
+                              : Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color:
+                                        _selectedFamilyMemberId == null
+                                            ? const Color(0xFFBBBBBB)
+                                            : const Color(0xFF6CC2A8),
+                                    width:
+                                        _selectedFamilyMemberId == null
+                                            ? 1.2
+                                            : 1.8,
+                                  ),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    isExpanded: true,
+                                    value: _selectedFamilyMemberId,
+                                    hint: const Text('Select a family member'),
+                                    icon: const Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Color(0xFF6CC2A8),
+                                    ),
+                                    items:
+                                        _familyMembers
+                                            .map<DropdownMenuItem<String>>((
+                                              Map<String, String> member,
+                                            ) {
+                                              return DropdownMenuItem<String>(
+                                                value: member['_id'],
+                                                child: Text(
+                                                  member['name'] ?? '',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w400,
+                                                  ),
+                                                ),
+                                              );
+                                            })
+                                            .toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        _selectedFamilyMemberId = newValue;
+                                        if (newValue != null) {
+                                          memberController.text =
+                                              _familyMembers.firstWhere(
+                                                (m) => m['_id'] == newValue,
+                                              )['name'] ??
+                                              '';
+                                        } else {
+                                          memberController.text = '';
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
                         ],
                       ),
                       const SizedBox(height: 10),
@@ -573,7 +714,8 @@ void showAddAppointmentDialog(
                               totalDoseController.text.isEmpty ||
                               selectedDate == null ||
                               selectedTime == null ||
-                              diseaseController.text.isEmpty) {
+                              diseaseController.text.isEmpty ||
+                              _selectedFamilyMemberId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -601,35 +743,60 @@ void showAddAppointmentDialog(
                             'date': appointmentDateTime.toIso8601String(),
                             'description': detailController.text,
                             'diseaseName': diseaseController.text,
+                            'memberId': _selectedFamilyMemberId,
+                            'memberName': memberController.text,
                           };
 
                           final String? uid = await getUserId();
-                          final response = await http.post(
-                            Uri.parse(
-                              '${dotenv.env['API_URL']}/appointment?uid=$uid',
-                            ),
-                            headers: {'Content-Type': 'application/json'},
-                            body: jsonEncode(data),
-                          );
+                          if (uid == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("User not logged in."),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                            return;
+                          }
 
-                          if (response.statusCode == 200) {
+                          try {
+                            final response = await http.post(
+                              Uri.parse(
+                                '${dotenv.env['API_URL']}/appointment?uid=$uid',
+                              ),
+                              headers: {'Content-Type': 'application/json'},
+                              body: jsonEncode(data),
+                            );
+
+                            if (response.statusCode == 200) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Appointment added successfully!",
+                                  ),
+                                  backgroundColor: Color(0xFF6CC2A8),
+                                ),
+                              );
+                              Navigator.of(context).pop();
+                              onAppointmentAdded();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "Failed to add appointment: ${response.body}",
+                                  ),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            print("Error adding appointment: $e");
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                  "Appointment added successfully!",
-                                ),
-                                backgroundColor: Color(0xFF6CC2A8),
-                              ),
-                            );
-                            Navigator.of(context).pop();
-                            onAppointmentAdded();
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "Failed to add appointment: ${response.body}",
+                                  "An error occurred while adding appointment.",
                                 ),
                                 backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
                               ),
                             );
                           }

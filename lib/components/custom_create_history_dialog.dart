@@ -14,13 +14,7 @@ void showHistoryDetailsDialog(
   final doseController = TextEditingController();
   final detailController = TextEditingController();
   final totalDoseController = TextEditingController();
-
   final diseaseController = TextEditingController();
-
-  Future<String?> getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('user_id');
-  }
 
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
@@ -28,6 +22,16 @@ void showHistoryDetailsDialog(
   List<String> _diseases = [];
   bool _isLoadingDiseases = true;
   String? _diseaseError;
+
+  List<Map<String, String>> _familyMembers = [];
+  bool _isLoadingFamilyMembers = true;
+  String? _familyMemberError;
+  String? _selectedFamilyMemberId;
+
+  Future<String?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_id');
+  }
 
   showDialog(
     context: context,
@@ -69,15 +73,78 @@ void showHistoryDetailsDialog(
             }
           }
 
+          Future<void> _fetchFamilyMemberNames() async {
+            setState(() {
+              _isLoadingFamilyMembers = true;
+              _familyMemberError = null;
+            });
+            final uid = await getUserId();
+            if (uid == null) {
+              _familyMemberError = "User not logged in.";
+              setState(() {
+                _isLoadingFamilyMembers = false;
+              });
+              return;
+            }
+
+            try {
+              final response = await http.get(
+                Uri.parse('${dotenv.env['API_URL']}/family/names?uid=$uid'),
+                headers: {'Content-Type': 'application/json'},
+              );
+
+              if (response.statusCode == 200) {
+                final Map<String, dynamic> responseData = jsonDecode(
+                  response.body,
+                );
+                final List<dynamic> membersList =
+                    responseData['members'] as List<dynamic>;
+                _familyMembers =
+                    membersList
+                        .map(
+                          (item) => {
+                            '_id': item['id'].toString(),
+                            'name': item['fullName'].toString(),
+                          },
+                        )
+                        .toList();
+
+                if (_familyMembers.isNotEmpty) {
+                  _selectedFamilyMemberId = _familyMembers.first['_id'];
+                }
+              } else {
+                _familyMemberError =
+                    'Failed to load family members: ${response.statusCode}';
+                print(
+                  "Error fetching family members: ${response.statusCode} - ${response.body}",
+                );
+              }
+            } catch (e) {
+              _familyMemberError =
+                  'Failed to connect to server to load family members.';
+              print("Exception fetching family members: $e");
+            } finally {
+              setState(() {
+                _isLoadingFamilyMembers = false;
+              });
+            }
+          }
+
           if (_isLoadingDiseases &&
               _diseases.isEmpty &&
               _diseaseError == null) {
             _fetchDiseases();
           }
+          if (_isLoadingFamilyMembers &&
+              _familyMembers.isEmpty &&
+              _familyMemberError == null) {
+            _fetchFamilyMemberNames();
+          }
+
           return AlertDialog(
             backgroundColor: Colors.white,
             title: const Text(
-              'History Details',
+              'Add History',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             content: SizedBox(
@@ -141,119 +208,187 @@ void showHistoryDetailsDialog(
                           _isLoadingDiseases
                               ? const Center(child: CircularProgressIndicator())
                               : _diseaseError != null
-                                  ? Text(
-                                      _diseaseError!,
-                                      style: const TextStyle(color: Colors.red),
-                                    )
-                                  : Autocomplete<String>(
-                                      optionsBuilder: (
-                                        TextEditingValue textEditingValue,
-                                      ) {
-                                        if (textEditingValue.text.isEmpty) {
-                                          return _diseases;
-                                        }
-                                        return _diseases.where((String option) {
-                                          return option.toLowerCase().contains(
-                                            textEditingValue.text.toLowerCase(),
-                                          );
-                                        });
-                                      },
-                                      fieldViewBuilder: (
-                                        BuildContext context,
-                                        TextEditingController
-                                            textEditingController,
-                                        FocusNode focusNode,
-                                        VoidCallback onFieldSubmitted,
-                                      ) {
-                                        diseaseController.text =
-                                            textEditingController.text;
-                                        return TextField(
-                                          controller: textEditingController,
-                                          focusNode: focusNode,
-                                          onSubmitted: (String value) {
-                                            onFieldSubmitted();
-                                            diseaseController.text = value;
-                                          },
-                                          decoration: InputDecoration(
-                                            filled: true,
-                                            fillColor: Colors.white,
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 10,
-                                            ),
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                color: Color(0xFFBBBBBB),
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                color: Color(0xFFBBBBBB),
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              borderSide: const BorderSide(
-                                                color: Color(0xFF6CC2A8),
-                                                width: 1.8,
-                                              ),
-                                            ),
+                              ? Text(
+                                _diseaseError!,
+                                style: const TextStyle(color: Colors.red),
+                              )
+                              : Autocomplete<String>(
+                                optionsBuilder: (
+                                  TextEditingValue textEditingValue,
+                                ) {
+                                  if (textEditingValue.text.isEmpty) {
+                                    return _diseases;
+                                  }
+                                  return _diseases.where((String option) {
+                                    return option.toLowerCase().contains(
+                                      textEditingValue.text.toLowerCase(),
+                                    );
+                                  });
+                                },
+                                fieldViewBuilder: (
+                                  BuildContext context,
+                                  TextEditingController textEditingController,
+                                  FocusNode focusNode,
+                                  VoidCallback onFieldSubmitted,
+                                ) {
+                                  diseaseController.text =
+                                      textEditingController.text;
+                                  return TextField(
+                                    controller: textEditingController,
+                                    focusNode: focusNode,
+                                    onSubmitted: (String value) {
+                                      onFieldSubmitted();
+                                      diseaseController.text = value;
+                                    },
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 10,
                                           ),
-                                        );
-                                      },
-                                      onSelected: (String selection) {
-                                        diseaseController.text = selection;
-                                        FocusScope.of(context).unfocus();
-                                      },
-                                      optionsViewBuilder: (
-                                        BuildContext context,
-                                        AutocompleteOnSelected<String>
-                                            onSelected,
-                                        Iterable<String> options,
-                                      ) {
-                                        return Align(
-                                          alignment: Alignment.topLeft,
-                                          child: Material(
-                                            elevation: 4.0,
-                                            child: SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.66,
-                                              height: 300,
-                                              child: ListView.builder(
-                                                padding:
-                                                    const EdgeInsets.all(8.0),
-                                                itemCount: options.length,
-                                                itemBuilder: (
-                                                  BuildContext context,
-                                                  int index,
-                                                ) {
-                                                  final String option = options
-                                                      .elementAt(index);
-                                                  return GestureDetector(
-                                                    onTap: () {
-                                                      onSelected(option);
-                                                    },
-                                                    child: ListTile(
-                                                      title: Text(option),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFBBBBBB),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFBBBBBB),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFF6CC2A8),
+                                          width: 1.8,
+                                        ),
+                                      ),
                                     ),
+                                  );
+                                },
+                                onSelected: (String selection) {
+                                  diseaseController.text = selection;
+                                  FocusScope.of(context).unfocus();
+                                },
+                                optionsViewBuilder: (
+                                  BuildContext context,
+                                  AutocompleteOnSelected<String> onSelected,
+                                  Iterable<String> options,
+                                ) {
+                                  return Align(
+                                    alignment: Alignment.topLeft,
+                                    child: Material(
+                                      elevation: 4.0,
+                                      child: SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                            0.66,
+                                        height: 300,
+                                        child: ListView.builder(
+                                          padding: const EdgeInsets.all(8.0),
+                                          itemCount: options.length,
+                                          itemBuilder: (
+                                            BuildContext context,
+                                            int index,
+                                          ) {
+                                            final String option = options
+                                                .elementAt(index);
+                                            return GestureDetector(
+                                              onTap: () {
+                                                onSelected(option);
+                                              },
+                                              child: ListTile(
+                                                title: Text(option),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Family Member',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 10),
+                          _isLoadingFamilyMembers
+                              ? const Center(child: CircularProgressIndicator())
+                              : _familyMemberError != null
+                              ? Text(
+                                _familyMemberError!,
+                                style: const TextStyle(color: Colors.red),
+                              )
+                              : DropdownButtonFormField<String>(
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF33354C),
+                                ),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFBBBBBB),
+                                      width: 1.2,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFBBBBBB),
+                                      width: 1.2,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF6CC2A8),
+                                      width: 1.8,
+                                    ),
+                                  ),
+                                ),
+                                value: _selectedFamilyMemberId,
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _selectedFamilyMemberId = newValue;
+                                  });
+                                },
+                                items:
+                                    _familyMembers
+                                        .map<DropdownMenuItem<String>>((
+                                          Map<String, String> member,
+                                        ) {
+                                          return DropdownMenuItem<String>(
+                                            value: member['_id'],
+                                            child: Text(member['name']!),
+                                          );
+                                        })
+                                        .toList(),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please select a family member';
+                                  }
+                                  return null;
+                                },
+                              ),
                         ],
                       ),
                       const SizedBox(height: 10),
@@ -332,6 +467,13 @@ void showHistoryDetailsDialog(
                                         width: 1.2,
                                       ),
                                     ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF6CC2A8),
+                                        width: 1.8,
+                                      ),
+                                    ),
                                   ),
                                   keyboardType: TextInputType.number,
                                 ),
@@ -370,6 +512,13 @@ void showHistoryDetailsDialog(
                                         width: 1.2,
                                       ),
                                     ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF6CC2A8),
+                                        width: 1.8,
+                                      ),
+                                    ),
                                   ),
                                   keyboardType: TextInputType.number,
                                 ),
@@ -396,7 +545,7 @@ void showHistoryDetailsDialog(
                                       context: context,
                                       initialDate:
                                           selectedDate ?? DateTime.now(),
-                                      firstDate: DateTime.now(),
+                                      firstDate: DateTime(1900),
                                       lastDate: DateTime(2100),
                                     );
                                     if (picked != null) {
@@ -423,7 +572,7 @@ void showHistoryDetailsDialog(
                                     ),
                                     child: Text(
                                       selectedDate == null
-                                          ? ''
+                                          ? 'Select Date'
                                           : DateFormat.yMMMMd().format(
                                             selectedDate!,
                                           ),
@@ -481,7 +630,7 @@ void showHistoryDetailsDialog(
                                     ),
                                     child: Text(
                                       selectedTime == null
-                                          ? ''
+                                          ? 'Select Time'
                                           : selectedTime!.format(context),
                                       style: TextStyle(
                                         color:
@@ -532,6 +681,13 @@ void showHistoryDetailsDialog(
                                   width: 1.2,
                                 ),
                               ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF6CC2A8),
+                                  width: 1.8,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -567,6 +723,16 @@ void showHistoryDetailsDialog(
                           foregroundColor: Colors.white,
                         ),
                         onPressed: () async {
+                          if (_selectedFamilyMemberId == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Please select a family member."),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                            return;
+                          }
+
                           if (vaccineController.text.isEmpty ||
                               hospitalController.text.isEmpty ||
                               doseController.text.isEmpty ||
@@ -593,7 +759,26 @@ void showHistoryDetailsDialog(
                             selectedTime!.minute,
                           );
 
+                          final name =
+                              _familyMembers.firstWhere(
+                                (member) =>
+                                    member['_id'] == _selectedFamilyMemberId,
+                                orElse: () => {'name': 'Unknown'},
+                              )['name'];
+                          if (name == 'Unknown') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Selected family member not found.",
+                                ),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                            return;
+                          }
+
                           final data = {
+                            'memberName': name,
                             'vaccineName': vaccineController.text,
                             'location': hospitalController.text,
                             'dose': int.tryParse(doseController.text),

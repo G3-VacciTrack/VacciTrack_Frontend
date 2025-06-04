@@ -4,7 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/intl.dart';
 import '../pages/signin_page.dart';
+import '../components/custom_family_card.dart';
+import '../components/custom_family_detail_dialog.dart';
+import '../components/custom_create_family_dialog.dart'; 
 
 class UserInfoPage extends StatefulWidget {
   const UserInfoPage({super.key});
@@ -16,9 +20,18 @@ class UserInfoPage extends StatefulWidget {
 class _UserInfoPageState extends State<UserInfoPage> {
   static final String baseUrl =
       dotenv.env['API_URL'] ?? 'http://localhost:3001/api';
+
   late Future<Map<String, dynamic>?> futureUser;
-  String? email;
+  late Future<List<Map<String, dynamic>>> futureFamily;
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    futureUser = fetchUserInfo();
+    futureFamily = fetchFamilyInfo();
+  }
 
   Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
@@ -36,7 +49,10 @@ class _UserInfoPageState extends State<UserInfoPage> {
 
   Future<Map<String, dynamic>?> fetchUserInfo() async {
     final uid = await getUserId();
-    if (uid == null) return null;
+    if (uid == null) {
+      print('User ID is null, cannot fetch user info.');
+      return null;
+    }
 
     final url = Uri.parse('$baseUrl/user/info?uid=$uid');
     try {
@@ -50,6 +66,8 @@ class _UserInfoPageState extends State<UserInfoPage> {
         if (jsonResponse['user'] != null) {
           return jsonResponse['user'] as Map<String, dynamic>;
         }
+      } else {
+        print('Failed to load user info: ${response.statusCode}');
       }
       return null;
     } catch (e) {
@@ -58,11 +76,34 @@ class _UserInfoPageState extends State<UserInfoPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    futureUser = fetchUserInfo();
-    email = FirebaseAuth.instance.currentUser?.email;
+  Future<List<Map<String, dynamic>>> fetchFamilyInfo() async {
+    final uid = await getUserId();
+    if (uid == null) {
+      print('User ID is null, cannot fetch family info.');
+      return [];
+    }
+
+    final url = Uri.parse('$baseUrl/family/all?uid=$uid');
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        if (jsonResponse['members'] != null &&
+            jsonResponse['members'] is List) {
+          return List<Map<String, dynamic>>.from(jsonResponse['members']);
+        }
+      } else {
+        print('Failed to load family info: ${response.statusCode}');
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching family info: $e');
+      return [];
+    }
   }
 
   Widget buildProfileRow(String label, String value) {
@@ -89,52 +130,23 @@ class _UserInfoPageState extends State<UserInfoPage> {
     );
   }
 
-  Widget buildFamilyCard(String name, String age) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0xFF33354C).withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Name',
-                style: TextStyle(color: Color(0xFF6F6F6F), fontSize: 12),
-              ),
-              Text(
-                'Dummy',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                'Age',
-                style: TextStyle(color: Color(0xFF6F6F6F), fontSize: 12),
-              ),
-              Text(
-                '21',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ],
-      ),
+  
+  void _showFamilyMemberDetailsDialog(
+    BuildContext context,
+    Map<String, dynamic> familyMember,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return FamilyDetailsDialog(
+          familyMember: familyMember,
+          onFamilyMemberUpdated: () {
+            setState(() {
+              futureFamily = fetchFamilyInfo();
+            });
+          },
+        );
+      },
     );
   }
 
@@ -150,8 +162,12 @@ class _UserInfoPageState extends State<UserInfoPage> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError || snapshot.data == null) {
-                return const Center(child: Text('Failed to load user info.'));
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (snapshot.data == null) {
+                return const Center(
+                  child: Text('Failed to load user info or user not found.'),
+                );
               } else {
                 final user = snapshot.data!;
                 return SingleChildScrollView(
@@ -177,13 +193,90 @@ class _UserInfoPageState extends State<UserInfoPage> {
                             IconButton(
                               icon: const Icon(Icons.logout, size: 28),
                               tooltip: 'Sign Out',
-                              onPressed: () => _signOut(context),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text('Confirm Logout'),
+                                      content: const Text(
+                                        'Are you sure you want to logout?',
+                                      ),
+                                      actionsPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16.0,
+                                            vertical: 8.0,
+                                          ),
+                                      contentPadding: const EdgeInsets.fromLTRB(
+                                        24.0,
+                                        10,
+                                        24.0,
+                                        0.0,
+                                      ),
+                                      actions: [
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(0, 8, 0, 10),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: TextButton(
+                                                  style: TextButton.styleFrom(
+                                                    backgroundColor: Colors.white,
+                                                    side: const BorderSide(
+                                                      color: Color(0xFF6CC2A8),
+                                                    ),
+                                                  ),
+                                                  child: const Text(
+                                                    'Cancel',
+                                                    style: TextStyle(
+                                                      color: Color(0xFF6CC2A8),
+                                                    ),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.of(
+                                                      context,
+                                                    ).pop(); 
+                                                  },
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: TextButton(
+                                                  style: TextButton.styleFrom(
+                                                    backgroundColor: const Color(
+                                                      0xFF6CC2A8,
+                                                    ),
+                                                  ),
+                                                  child: const Text(
+                                                    'Logout',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.of(
+                                                      context,
+                                                    ).pop(); 
+                                                    _signOut(
+                                                      context,
+                                                    ); 
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
                             ),
                           ],
                         ),
                         const SizedBox(height: 24),
                         Center(
-                          child: Container(
+                          child: SizedBox(
                             width: 330,
                             child: Column(
                               children: [
@@ -220,7 +313,20 @@ class _UserInfoPageState extends State<UserInfoPage> {
                               ),
                             ),
                             ElevatedButton.icon(
-                              onPressed: () {},
+                              onPressed: () async {
+                                final bool?
+                                memberAdded = await showDialog<bool?>(
+                                  context: context,
+                                  builder:
+                                      (context) =>
+                                          const AddFamilyMemberDialog(), 
+                                );
+                                if (memberAdded == true) {
+                                  setState(() {
+                                    futureFamily = fetchFamilyInfo();
+                                  });
+                                }
+                              },
                               icon: const Icon(
                                 Icons.add,
                                 size: 16,
@@ -246,12 +352,80 @@ class _UserInfoPageState extends State<UserInfoPage> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        buildFamilyCard('Dummy1', '21'),
-                        buildFamilyCard('Dummy2', '21'),
-                        buildFamilyCard('Dummy3', '21'),
-                        const SizedBox(
-                          height: 30,
+                        FutureBuilder<List<Map<String, dynamic>>>(
+                          future: futureFamily,
+                          builder: (context, familySnapshot) {
+                            if (familySnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            } else if (familySnapshot.hasError) {
+                              return Center(
+                                child: Text(
+                                  'Error loading family: ${familySnapshot.error}',
+                                ),
+                              );
+                            } else if (familySnapshot.data == null ||
+                                familySnapshot.data!.isEmpty) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 20.0,
+                                ),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons
+                                            .people_alt, 
+                                        size: 48.0, 
+                                        color: const Color.fromARGB(
+                                          255,
+                                          186,
+                                          235,
+                                          221,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 8.0,
+                                      ), 
+                                      Text(
+                                        'No member found', 
+                                        style: TextStyle(
+                                          fontSize: 16.0,
+                                          color:
+                                              Colors
+                                                  .grey[600], 
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            } else {
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: familySnapshot.data!.length,
+                                itemBuilder: (context, index) {
+                                  final familyMember =
+                                      familySnapshot.data![index];
+                                  return FamilyCard(
+                                    familyMember: familyMember,
+                                    onTap: () {
+                                      _showFamilyMemberDetailsDialog(
+                                        context,
+                                        familyMember,
+                                      );
+                                    },
+                                  );
+                                },
+                              );
+                            }
+                          },
                         ),
+                        const SizedBox(height: 30),
                         const Text(
                           'Vaccitrack Support',
                           style: TextStyle(
@@ -265,7 +439,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Need assistance? Reach out to our support team for help.',
+                              "Need assistance? Don’t hesitate to reach out to our support team—we’re here to help you with any questions, issues, or guidance you may need.",
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Color(0xFF6F6F6F),

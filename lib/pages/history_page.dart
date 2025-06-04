@@ -290,14 +290,14 @@ class _HistoryPageState extends State<HistoryPage> {
                               ),
                             ),
                           ),
-                          // const SizedBox(height: 6),
-                          // const Text(
-                          //   '*Display only years with data',
-                          //   style: TextStyle(
-                          //     fontSize: 12,
-                          //     color: Colors.black45,
-                          //   ),
-                          // ),
+                          
+                          
+                          
+                          
+                          
+                          
+                          
+                          
                         ],
                       ),
                     ],
@@ -404,6 +404,7 @@ class _HistoryPageState extends State<HistoryPage> {
                               );
                             },
                             child: VaccineHistoryCard(
+                              memberName: record.memberName,
                               diseaseName: record.diseaseName,
                               historyId: record.id,
                               vaccineName: record.vaccineName,

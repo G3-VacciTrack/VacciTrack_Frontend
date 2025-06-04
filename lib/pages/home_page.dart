@@ -230,6 +230,7 @@ class _HomePageState extends State<HomePage> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: VaccineAppointmentCard(
+                          memberName: appt.memberName,
                           appointmentId: appt.id,
                           diseaseName: appt.diseaseName,
                           vaccineName: appt.vaccineName,

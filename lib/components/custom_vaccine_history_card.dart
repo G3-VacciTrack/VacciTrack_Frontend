@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class VaccineHistoryCard extends StatelessWidget {
   final String historyId;
+  final String memberName;
   final String vaccineName;
   final String hospital;
   final int dose;
@@ -11,6 +12,7 @@ class VaccineHistoryCard extends StatelessWidget {
 
   const VaccineHistoryCard({
     super.key,
+    required this.memberName,
     required this.historyId,
     required this.diseaseName,
     required this.vaccineName,
@@ -70,6 +72,8 @@ class VaccineHistoryCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  Text('$memberName', style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 4),
                   Text(
                     hospital.isNotEmpty ? hospital : 'Unknown Hospital',
