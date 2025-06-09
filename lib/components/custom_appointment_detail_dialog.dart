@@ -974,8 +974,8 @@ Widget _buildDateTimeRow(
   required bool isEditing,
   required VoidCallback onTap,
   required bool isDate,
-  DateTime? selectedDate,
-  TimeOfDay? selectedTime,
+  DateTime? selectedDate, 
+  TimeOfDay? selectedTime, 
 }) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 5.0),
@@ -985,53 +985,45 @@ Widget _buildDateTimeRow(
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         GestureDetector(
-          onTap: isEditing ? onTap : null,
-          child: AbsorbPointer(
-            absorbing: !isEditing,
-            child: TextField(
-              readOnly: true,
-              controller: TextEditingController(text: displayValue),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color:
-                        isEditing
-                            ? const Color(0xFF6CC2A8)
-                            : const Color(0xFFBBBBBB),
-                    width: isEditing ? 1.8 : 1.2,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color:
-                        isEditing
-                            ? const Color(0xFF6CC2A8)
-                            : const Color(0xFFBBBBBB),
-                    width: isEditing ? 1.8 : 1.2,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF6CC2A8),
-                    width: 1.8,
-                  ),
-                ),
-                suffixIcon:
+          onTap: isEditing ? onTap : null, 
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            height: 48,
+            alignment: Alignment.centerLeft,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color:
                     isEditing
-                        ? Icon(
-                          isDate ? Icons.calendar_today : Icons.access_time,
-                        )
-                        : null,
+                        ? const Color(0xFF6CC2A8)
+                        : const Color(0xFFBBBBBB), 
+                width: isEditing ? 1.8 : 1.2,
               ),
+            ),
+            child: Row( 
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    displayValue.isEmpty
+                        ? (isEditing ? 'Tap to select' : 'N/A')
+                        : displayValue,
+                    style: TextStyle(
+                      color:
+                          displayValue.isEmpty ? Colors.grey[600] : const Color(0xFF33354C),
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis, 
+                  ),
+                ),
+                if (isEditing) 
+                  Icon(
+                    isDate ? Icons.calendar_today : Icons.access_time,
+                    color: Colors.grey[600], 
+                  ),
+              ],
             ),
           ),
         ),

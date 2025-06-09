@@ -1,3 +1,5 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -32,9 +34,14 @@ void showHistoryDetailsDialog(
       );
       final memberController = TextEditingController(text: history.memberName);
 
+      
       DateTime? _selectedDate = DateTime.tryParse(history.date);
       TimeOfDay? _selectedTime =
           _selectedDate != null ? TimeOfDay.fromDateTime(_selectedDate) : null;
+      
+      
+      String? _selectedFamilyMemberId = history.memberId;
+
 
       final String originalVaccineName = history.vaccineName;
       final String originalHospital = history.location;
@@ -48,7 +55,8 @@ void showHistoryDetailsDialog(
               : null;
       final String originalDiseaseName = history.diseaseName;
       final String originalMemberName = history.memberName;
-      final String? originalMemberId = history.memberId;
+      final String? originalMemberId = history.memberId; 
+
 
       Future<String?> getUserId() async {
         final prefs = await SharedPreferences.getInstance();
@@ -72,7 +80,8 @@ void showHistoryDetailsDialog(
       List<Map<String, String>> _familyMembers = [];
       bool _isLoadingFamilyMembers = true;
       String? _familyMemberError;
-      String? _selectedFamilyMemberId;
+      
+
 
       return StatefulBuilder(
         builder: (context, setState) {
@@ -146,15 +155,21 @@ void showHistoryDetailsDialog(
                         )
                         .toList();
 
+                
                 if (originalMemberId != null &&
                     _familyMembers.any((m) => m['_id'] == originalMemberId)) {
                   _selectedFamilyMemberId = originalMemberId;
                 } else if (_familyMembers.isNotEmpty) {
+                  
+                  
                   final matchedMember = _familyMembers.firstWhere(
                     (m) => m['name'] == originalMemberName,
-                    orElse: () => _familyMembers.first,
+                    orElse: () => _familyMembers.first, 
                   );
                   _selectedFamilyMemberId = matchedMember['_id'];
+                } else {
+                  
+                  _selectedFamilyMemberId = null;
                 }
               } else {
                 _familyMemberError =
@@ -206,10 +221,13 @@ void showHistoryDetailsDialog(
                         _fetchDiseases();
                         _fetchFamilyMembers();
 
+                        
                         _selectedDate = originalSelectedDate;
                         _selectedTime = originalSelectedTime;
+                        
+                        
                         _selectedFamilyMemberId = originalMemberId;
-                        memberController.text = originalMemberName;
+                        memberController.text = originalMemberName; 
                       });
                     },
                   ),
@@ -244,11 +262,10 @@ void showHistoryDetailsDialog(
                       _familyMembers,
                       _isLoadingFamilyMembers,
                       _familyMemberError,
-                      _selectedFamilyMemberId,
+                      _selectedFamilyMemberId, 
                       (String? newValue) {
                         setState(() {
                           _selectedFamilyMemberId = newValue;
-
                           if (newValue != null) {
                             memberController.text =
                                 _familyMembers.firstWhere(
@@ -260,7 +277,7 @@ void showHistoryDetailsDialog(
                           }
                         });
                       },
-                      memberController.text,
+                      memberController.text, 
                     ),
                     _buildDetailRow('Hospital', hospitalController, _isEditing),
                     Row(
@@ -305,8 +322,8 @@ void showHistoryDetailsDialog(
                               }
                             },
                             isDate: true,
-                            selectedDate: _selectedDate,
-                            selectedTime: _selectedTime,
+                            selectedDate: _selectedDate, 
+                            selectedTime: _selectedTime, 
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -327,8 +344,8 @@ void showHistoryDetailsDialog(
                               }
                             },
                             isDate: false,
-                            selectedDate: _selectedDate,
-                            selectedTime: _selectedTime,
+                            selectedDate: _selectedDate, 
+                            selectedTime: _selectedTime, 
                           ),
                         ),
                       ],
@@ -366,7 +383,7 @@ void showHistoryDetailsDialog(
                             _selectedTime = originalSelectedTime;
                             diseaseController.text = originalDiseaseName;
                             memberController.text = originalMemberName;
-                            _selectedFamilyMemberId = originalMemberId;
+                            _selectedFamilyMemberId = originalMemberId; 
                           });
                         },
                         child: const Text(
@@ -390,7 +407,7 @@ void showHistoryDetailsDialog(
                               _selectedDate == null ||
                               _selectedTime == null ||
                               diseaseController.text.isEmpty ||
-                              _selectedFamilyMemberId == null) {
+                              _selectedFamilyMemberId == null) { 
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -418,8 +435,8 @@ void showHistoryDetailsDialog(
                             'date': updatedHistoryDateTime.toIso8601String(),
                             'description': detailController.text,
                             'diseaseName': diseaseController.text,
-                            'memberId': _selectedFamilyMemberId,
-                            'memberName': memberController.text,
+                            'memberId': _selectedFamilyMemberId, 
+                            'memberName': memberController.text, 
                           };
 
                           final String? uid = await getUserId();
@@ -644,6 +661,8 @@ void showHistoryDetailsDialog(
   );
 }
 
+
+
 Widget _buildDetailRow(
   String label,
   TextEditingController controller,
@@ -844,8 +863,8 @@ Widget _buildDiseaseDetailRow(
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(
-                  color: Color(0xFF6CC2A8),
-                  width: 1.8,
+                  color: Color(0xFFBBBBBB),
+                  width: 1.2,
                 ),
               ),
             ),
@@ -920,6 +939,7 @@ Widget _buildFamilyMemberDropdown(
                 ),
               )
         else
+          
           TextField(
             controller: TextEditingController(text: displayValue),
             readOnly: true,
@@ -947,8 +967,8 @@ Widget _buildFamilyMemberDropdown(
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(
-                  color: Color(0xFF6CC2A8),
-                  width: 1.8,
+                  color: Color(0xFFBBBBBB), 
+                  width: 1.2,
                 ),
               ),
             ),
@@ -965,8 +985,8 @@ Widget _buildDateTimeRow(
   required bool isEditing,
   required VoidCallback onTap,
   required bool isDate,
-  DateTime? selectedDate,
-  TimeOfDay? selectedTime,
+  DateTime? selectedDate, 
+  TimeOfDay? selectedTime, 
 }) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 5.0),
@@ -976,53 +996,45 @@ Widget _buildDateTimeRow(
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         GestureDetector(
-          onTap: isEditing ? onTap : null,
-          child: AbsorbPointer(
-            absorbing: !isEditing,
-            child: TextField(
-              readOnly: true,
-              controller: TextEditingController(text: displayValue),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color:
-                        isEditing
-                            ? const Color(0xFF6CC2A8)
-                            : const Color(0xFFBBBBBB),
-                    width: isEditing ? 1.8 : 1.2,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color:
-                        isEditing
-                            ? const Color(0xFF6CC2A8)
-                            : const Color(0xFFBBBBBB),
-                    width: isEditing ? 1.8 : 1.2,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF6CC2A8),
-                    width: 1.8,
-                  ),
-                ),
-                suffixIcon:
+          onTap: isEditing ? onTap : null, 
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            height: 48,
+            alignment: Alignment.centerLeft,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color:
                     isEditing
-                        ? Icon(
-                          isDate ? Icons.calendar_today : Icons.access_time,
-                        )
-                        : null,
+                        ? const Color(0xFF6CC2A8)
+                        : const Color(0xFFBBBBBB), 
+                width: isEditing ? 1.8 : 1.2,
               ),
+            ),
+            child: Row( 
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    displayValue.isEmpty
+                        ? (isEditing ? 'Tap to select' : 'N/A')
+                        : displayValue,
+                    style: TextStyle(
+                      color:
+                          displayValue.isEmpty ? Colors.grey[600] : const Color(0xFF33354C),
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis, 
+                  ),
+                ),
+                if (isEditing) 
+                  Icon(
+                    isDate ? Icons.calendar_today : Icons.access_time,
+                    color: Colors.grey[600], 
+                  ),
+              ],
             ),
           ),
         ),
