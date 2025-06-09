@@ -650,7 +650,6 @@ void showAppointmentDetailsDialog(
   );
 }
 
-// Keep _buildDetailRow as is
 Widget _buildDetailRow(
   String label,
   TextEditingController controller,
@@ -863,7 +862,6 @@ Widget _buildDiseaseDetailRow(
   );
 }
 
-// New widget function for family members using a DropdownButton
 Widget _buildFamilyMemberDropdown(
   BuildContext context,
   String label,
