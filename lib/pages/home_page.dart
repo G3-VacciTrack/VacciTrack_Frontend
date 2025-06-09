@@ -105,7 +105,7 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           upcomingAppointments = [];
           errorMessage =
-              'Failed to load upcoming appointments: ${response.statusCode}';
+              'Failed to load upcoming appointments';
         });
       }
     } catch (e) {

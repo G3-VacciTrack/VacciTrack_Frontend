@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:intl/intl.dart';
 import '../pages/signin_page.dart';
 import '../components/custom_family_card.dart';
 import '../components/custom_family_detail_dialog.dart';
